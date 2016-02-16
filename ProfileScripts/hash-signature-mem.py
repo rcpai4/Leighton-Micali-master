@@ -194,48 +194,54 @@ def lmots_verify_sig(public_key, sig, message):
         return 1
     else:
         return 0
+message = "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized."
 
 # LM-OTS test functions
 #
 I = entropySource.read(31)
 q = uint32ToString(0)
-private_key = lmots_gen_priv()
 
-print "LMOTS private key: "
-for i, x in enumerate(private_key):
-    print "x[" + str(i) + "]:\t" + stringToHex(x)
+for j in range(0, 1):
+    private_key = lmots_gen_priv()
+    #commented by RAM
+    #print "LMOTS private key: "
+    #for i, x in enumerate(private_key):
+    #print "x[" + str(i) + "]:\t" + stringToHex(x)
     
-public_key = lmots_gen_pub(private_key, I, q)
+    public_key = lmots_gen_pub(private_key, I, q)
 
-print "LMOTS public key: "
-print stringToHex(public_key)
+    #commented by RAM
+    #print "LMOTS public key: "
+    #print stringToHex(public_key)
+    #commented by RAM
+    #print "message: " + message
 
-message = "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized."
+    sig = lmots_gen_sig(private_key, I, q, message)
 
-print "message: " + message
+    #commented by RAM
+    #print "LMOTS signature byte length: " + str(len(sig))
 
-sig = lmots_gen_sig(private_key, I, q, message)
+    #print "LMOTS signature: "
+    #print_lmots_sig(sig)
 
-print "LMOTS signature byte length: " + str(len(sig))
+    print "verification: "
+    print "true positive test: "
+    if (lmots_verify_sig(public_key, sig, message) == 1):
+        print "passed: message/signature pair is valid as expected"
+    else:
+        print "failed: message/signature pair is invalid"
 
-print "LMOTS signature: "
-print_lmots_sig(sig)
+    print "false positive test: "
+    if (lmots_verify_sig(public_key, sig, "some other message") == 1):
+        print "failed: message/signature pair is valid (expected failure)"
+    else:
+        print "passed: message/signature pair is invalid as expected"
 
-print "verification: "
-print "true positive test: "
-if (lmots_verify_sig(public_key, sig, message) == 1):
-    print "passed: message/signature pair is valid as expected"
-else:
-    print "failed: message/signature pair is invalid"
-
-print "false positive test: "
-if (lmots_verify_sig(public_key, sig, "some other message") == 1):
-    print "failed: message/signature pair is valid (expected failure)"
-else:
-    print "passed: message/signature pair is invalid as expected"
-
+while 1:
+    pass
 #uncomment this to run only LM_OTS
-#sys.exit(0)
+sys.exit(0)
+
 
 # LMS N-time signatures functions
 #
@@ -368,7 +374,7 @@ class lms_public_key(object):
 
 
 
-
+'''
 # test LMS signatures
 #
 
@@ -381,10 +387,13 @@ lms_pub = lms_public_key(lms_priv.get_public_key())
 
 for i in range(0, 2**h):
     sig = lms_priv.sign(message)
-
-    print "LMS signature byte length: " + str(len(sig))
+    
+    #print "ITERATION NUMBER "+ str(i)
+    #print "LMS signature byte length: " + str(len(sig))
 
     # print_lms_sig(sig)
+    lms_pub.verify(message, sig) 
+    lms_pub.verify("other message", sig)
 
     print "true positive test"
     if (lms_pub.verify(message, sig) == 1):
@@ -398,6 +407,8 @@ for i in range(0, 2**h):
     else:
         print "passed: LMS message/signature pair is invalid as expected"
 
+sys.exit(0)
+'''
 # Hierarchical LMS signatures (HLMS)
 
 def encode_hlms_sig(pub2, sig1, lms_sig):
