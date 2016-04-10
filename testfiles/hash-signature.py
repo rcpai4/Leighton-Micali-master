@@ -91,8 +91,10 @@ def stringToHex(x):
 #
 def encode_lmots_sig(C, I, q, y):
     result = uint32ToString(lmots_sha256_n32_w8) + C + I + NULL + q
+    print " LENGTH OF SIGN 1 " + str(len(result)) + " bytes)"
     for i, e in enumerate(y):
         result = result + y[i]
+        print " LENGTH OF SIGN ( " +str(i) + ") " + str(len(result)) + " bytes)"
     return result
 
 def decode_lmots_sig(sig):
@@ -157,13 +159,15 @@ def checksum(x):
 #
 def lmots_gen_sig(private_key, I, q, message):
     C = entropySource.read(n)
+    f.write(stringToHex(C).upper())
+    f.write('\n')
     hashQ = H(message + C + I + q + D_MESG)
     V = hashQ + checksum(hashQ)
-    # print "V: " + stringToHex(V)
+    print "V: " + stringToHex(V)
     y = list()
     for i, x in enumerate(private_key):
         tmp = x
-        # print "i:" + str(i) + " range: " + str(range(0, ord(V[i])))
+        print "i:" + str(i) + "V[i] : " + stringToHex(V[i]) + " range: " + str(range(0, ord(V[i])))
         for j in range(0, ord(V[i])):
             tmp = H(tmp + I + q + uint16ToString(i) + uint8ToString(j) + D_ITER)
         y.append(tmp)
@@ -194,37 +198,41 @@ def lmots_verify_sig(public_key, sig, message):
         return 1
     else:
         return 0
-message = "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized."
 
 # LM-OTS test functions
 #
-'''
 I = entropySource.read(31)
 q = uint32ToString(0)
 private_key = lmots_gen_priv()
+f = open('inputfile', 'w')
+f.write(stringToHex(I).upper())
+f.write('\n')
+f.write(stringToHex(q).upper())
+f.write('\n')
+print " ENTROPY: " + I
 
-#commented by RAM
-#print "LMOTS private key: "
-#for i, x in enumerate(private_key):
-#    print "x[" + str(i) + "]:\t" + stringToHex(x)
-    
+print "LMOTS private key: "
+for i, x in enumerate(private_key):
+    print "x[" + str(i) + "]:\t" + stringToHex(x)
+    f.write(stringToHex(x).upper())
+    f.write('\n')
+
+
 public_key = lmots_gen_pub(private_key, I, q)
 
-#commented by RAM
-#print "LMOTS public key: "
-#print stringToHex(public_key)
+print "LMOTS public key: "
+print stringToHex(public_key)
 
+message = "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized."
 
-#commented by RAM
-#print "message: " + message
+print "message: " + message
 
 sig = lmots_gen_sig(private_key, I, q, message)
 
-#commented by RAM
-#print "LMOTS signature byte length: " + str(len(sig))
+print "LMOTS signature byte length: " + str(len(sig))
 
-#print "LMOTS signature: "
-#print_lmots_sig(sig)
+print "LMOTS signature: "
+print_lmots_sig(sig)
 
 print "verification: "
 print "true positive test: "
@@ -240,8 +248,7 @@ else:
     print "passed: message/signature pair is invalid as expected"
 
 #uncomment this to run only LM_OTS
-sys.exit(0)
-'''
+#sys.exit(0)
 
 # LMS N-time signatures functions
 #
@@ -374,7 +381,7 @@ class lms_public_key(object):
 
 
 
-'''
+
 # test LMS signatures
 #
 
@@ -387,14 +394,11 @@ lms_pub = lms_public_key(lms_priv.get_public_key())
 
 for i in range(0, 2**h):
     sig = lms_priv.sign(message)
-    
-    #print "ITERATION NUMBER "+ str(i)
-    #print "LMS signature byte length: " + str(len(sig))
+
+    print "LMS signature byte length: " + str(len(sig))
 
     # print_lms_sig(sig)
-    lms_pub.verify(message, sig) 
-    lms_pub.verify("other message", sig)
-'''
+
     print "true positive test"
     if (lms_pub.verify(message, sig) == 1):
         print "passed: LMS message/signature pair is valid"
@@ -406,10 +410,7 @@ for i in range(0, 2**h):
         print "failed: LMS message/signature pair is valid (expected failure)"
     else:
         print "passed: LMS message/signature pair is invalid as expected"
-'''
 
-sys.exit(0)
-'''
 # Hierarchical LMS signatures (HLMS)
 
 def encode_hlms_sig(pub2, sig1, lms_sig):

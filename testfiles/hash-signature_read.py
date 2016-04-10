@@ -91,8 +91,11 @@ def stringToHex(x):
 #
 def encode_lmots_sig(C, I, q, y):
     result = uint32ToString(lmots_sha256_n32_w8) + C + I + NULL + q
+    print " LENGTH OF SIGN 1 " + str(len(result)) + " bytes)"
     for i, e in enumerate(y):
         result = result + y[i]
+        print " LENGTH OF SIGN ( " +str(i) + ") " + str(len(result)) + " bytes)"
+        print " signature:  " + stringToHex(result);
     return result
 
 def decode_lmots_sig(sig):
@@ -137,8 +140,22 @@ def lmots_gen_pub(private_key, I, q):
         tmp = x
         # print "i:" + str(i) + " range: " + str(range(0, 256))
         for j in range(0, 256):
+            #tempr = tmp + I + q + uint16ToString(i) + uint8ToString(j) + D_ITER;
+            #print "tmp:" + stringToHex(tmp)
+            #print "I:" + stringToHex(I)
+            #print "q:" + stringToHex(q)
+            #print "i:" + uint16ToString(i)               
+            #print "i:" + stringToHex(uint16ToString(i))
+            #print "j:" + stringToHex(uint8ToString(j))
+            #print "D_ITER:" + stringToHex(D_ITER)
+            #print "tempr:" + stringToHex(tempr) + " Len: " + str(len(tempr));
             tmp = H(tmp + I + q + uint16ToString(i) + uint8ToString(j) + D_ITER)
+            #print "i:" + str(i) + " tmp : " + stringToHex(tmp)
+            #sys.exit(1);
+                
+        print "i:" + str(i) + " tmp : " + stringToHex(tmp)
         hash.update(tmp)
+    print "PBLC " + stringToHex(D_PBLC);
     hash.update(D_PBLC)
     return hash.digest()
 
@@ -147,8 +164,9 @@ def lmots_gen_pub(private_key, I, q):
 def checksum(x):
     sum = 0
     for c in x:
+        #print "C: " + str(ord(c)) + "sum: " + str(sum)
         sum = sum + ord(c)
-    # print format(sum, '04x')
+    #print "cheksum : sum " + str(sum)
     c1 = chr(sum >> 8)
     c2 = chr(sum & 0xff)
     return c1 + c2
@@ -156,16 +174,31 @@ def checksum(x):
 # Algorithm 3: Generating a Signature From a Private Key and a Message
 #
 def lmots_gen_sig(private_key, I, q, message):
-    C = entropySource.read(n)
+    C = f.readline()
+    C = C.strip();
+    C = C.decode("hex")
+    #C = entropySource.read(n)
+    print "C: " + stringToHex(C)
+    inp_hashq = message + C + I + q + D_MESG
+    print "input hashQ: " + stringToHex(inp_hashq)
     hashQ = H(message + C + I + q + D_MESG)
+    print "hashQ: " + stringToHex(hashQ)
     V = hashQ + checksum(hashQ)
-    # print "V: " + stringToHex(V)
+    print "V: " + stringToHex(V)
     y = list()
     for i, x in enumerate(private_key):
         tmp = x
-        # print "i:" + str(i) + " range: " + str(range(0, ord(V[i])))
+        #print "i:" + str(i) + "V[i] : " + stringToHex(V[i]) + " range: " + str(range(0, ord(V[i])))
         for j in range(0, ord(V[i])):
+            #if( j <= 2):
+                #wow = tmp + I + q + uint16ToString(i) + uint8ToString(j) + D_ITER;
+                #print "input: " + stringToHex(wow)
             tmp = H(tmp + I + q + uint16ToString(i) + uint8ToString(j) + D_ITER)
+            #if( j <= 2):    
+                #print "output: " + stringToHex(tmp);
+                #if( j == 2):
+                #    sys.exit(1);
+        print "y[" + str(i) + "]: " + stringToHex(tmp);
         y.append(tmp)
     return encode_lmots_sig(C, I, q, y)
 
@@ -173,14 +206,24 @@ def lmots_sig_to_pub(sig, message):
     C, I, q, y = decode_lmots_sig(sig)
     hashQ = H(message + C + I + q + D_MESG)
     V = hashQ + checksum(hashQ)
-    # print "V: " + stringToHex(V)
+    print "V: " + stringToHex(V)
     hash = SHA256.new()
     hash.update(I + q)
     for i, y in enumerate(y):
         tmp = y
         # print "i:" + str(i) + " range: " + str(range(ord(V[i]), 256))
         for j in range(ord(V[i]), 256):
+            tempr = tmp + I + q + uint16ToString(i) + uint8ToString(j) + D_ITER;
+            #print "tmp: " + stringToHex(tmp);
+            #print "I: " + stringToHex(I);
+            #print "q: " + stringToHex(q);
+            #print "i: " + stringToHex(uint16ToString(i));
+            #print "j: " + stringToHex(uint8ToString(j));
+            #print "D_ITER: " + stringToHex(uint8ToString(D_ITER));
+            #print "input: " + stringToHex(tempr);
             tmp = H(tmp + I + q + uint16ToString(i) + uint8ToString(j) + D_ITER)
+            #print "output: " + stringToHex(tmp);
+            #sys.exit(1)
         hash.update(tmp)
     hash.update(D_PBLC)
     return hash.digest()
@@ -188,60 +231,72 @@ def lmots_sig_to_pub(sig, message):
 # Algorithm 4: Verifying a Signature and Message Using a Public Key
 #
 def lmots_verify_sig(public_key, sig, message):
+    print "VERIFY: "
     z = lmots_sig_to_pub(sig, message)
-    # print "z: " + stringToHex(z)
+    print "z: " + stringToHex(z)
     if z == public_key:
         return 1
     else:
         return 0
-message = "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized."
 
 # LM-OTS test functions
 #
-I = entropySource.read(31)
-q = uint32ToString(0)
+f = open('inputfile', 'r')
+I = f.readline()
+I = I.strip();
+I = I.decode("hex")
+q = f.readline()
+q = q.strip();
+q = q.decode("hex")
+private_key = lmots_gen_priv()
 
-for j in range(0, 4096):
-    private_key = lmots_gen_priv()
-    #commented by RAM
-    #print "LMOTS private key: "
-    #for i, x in enumerate(private_key):
-    #print "x[" + str(i) + "]:\t" + stringToHex(x)
-    
-    public_key = lmots_gen_pub(private_key, I, q)
+print " ENTROPY: " + I
+print " ENTROPY(in hex): " + stringToHex(I)
 
-    #commented by RAM
-    #print "LMOTS public key: "
-    #print stringToHex(public_key)
-    #commented by RAM
-    #print "message: " + message
+print "LMOTS private key read: "
+for i, x in enumerate(private_key):
+    x = f.readline()
+    x = x.strip()
+    x = x.decode("hex")
+    private_key[i] = x
+    print "x[" + str(i) + "]:\t" + stringToHex(x)
 
-    sig = lmots_gen_sig(private_key, I, q, message)
+print "LMOTS private key again: "
+for i, x in enumerate(private_key):
+    print "x[" + str(i) + "]:\t" + stringToHex(x)
 
-    #commented by RAM
-    #print "LMOTS signature byte length: " + str(len(sig))
 
-    #print "LMOTS signature: "
-    #print_lmots_sig(sig)
+public_key = lmots_gen_pub(private_key, I, q)
 
-    print "verification: "
-    print "true positive test: "
-    if (lmots_verify_sig(public_key, sig, message) == 1):
-        print "passed: message/signature pair is valid as expected"
-    else:
-        print "failed: message/signature pair is invalid"
+print "LMOTS public key: "
+print stringToHex(public_key)
 
-    print "false positive test: "
-    if (lmots_verify_sig(public_key, sig, "some other message") == 1):
-        print "failed: message/signature pair is valid (expected failure)"
-    else:
-        print "passed: message/signature pair is invalid as expected"
+message = "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized."
 
-while 1:
-    pass
+print "message: " + message
+
+sig = lmots_gen_sig(private_key, I, q, message)
+
+print "LMOTS signature byte length: " + str(len(sig))
+
+print "LMOTS signature: "
+print_lmots_sig(sig)
+
+print "verification: "
+print "true positive test: "
+if (lmots_verify_sig(public_key, sig, message) == 1):
+    print "passed: message/signature pair is valid as expected"
+else:
+    print "failed: message/signature pair is invalid"
+#sys.exit(1);
+print "false positive test: "
+if (lmots_verify_sig(public_key, sig, "some other message") == 1):
+    print "failed: message/signature pair is valid (expected failure)"
+else:
+    print "passed: message/signature pair is invalid as expected"
+
 #uncomment this to run only LM_OTS
-sys.exit(0)
-
+#sys.exit(0)
 
 # LMS N-time signatures functions
 #
@@ -374,7 +429,7 @@ class lms_public_key(object):
 
 
 
-'''
+
 # test LMS signatures
 #
 
@@ -387,13 +442,10 @@ lms_pub = lms_public_key(lms_priv.get_public_key())
 
 for i in range(0, 2**h):
     sig = lms_priv.sign(message)
-    
-    #print "ITERATION NUMBER "+ str(i)
-    #print "LMS signature byte length: " + str(len(sig))
+
+    print "LMS signature byte length: " + str(len(sig))
 
     # print_lms_sig(sig)
-    lms_pub.verify(message, sig) 
-    lms_pub.verify("other message", sig)
 
     print "true positive test"
     if (lms_pub.verify(message, sig) == 1):
@@ -407,8 +459,6 @@ for i in range(0, 2**h):
     else:
         print "passed: LMS message/signature pair is invalid as expected"
 
-sys.exit(0)
-'''
 # Hierarchical LMS signatures (HLMS)
 
 def encode_hlms_sig(pub2, sig1, lms_sig):
