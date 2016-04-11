@@ -26,7 +26,7 @@ LFLAGS = -L./
 LIBS = -lm
 
 # define the C source files
-SRCS = main.c commons.c lm_ots.c sha2.c
+SRCS = main.c commons.c lm_ots.c sha2.c lms.c
 
 # define the C object files 
 #

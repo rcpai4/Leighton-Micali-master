@@ -14,33 +14,32 @@
 //User defined headers
 #include "commons.h"
 
-random_handle_t* entropy_create(void)
+#if FILE_READ
+FILE *fp_file = NULL;
+char file_buff[1024]; 
+#endif
+
+void entropy_create(void)
 {
     srand(time(0));
-    random_handle_t* random_hdl = (random_handle_t *) malloc(sizeof(random_handle_t));
-    return random_hdl;
+#if FILE_READ
+    fp_file = fopen("inputfile_lms","r");
+#endif
 }
 
-char* entropy_read(random_handle_t* random_handle, unsigned int n)
+char* entropy_read(char* buffer, unsigned int n)
 {
+#if FILE_READ
+    fgets(file_buff,sizeof file_buff,fp_file);
+    strip(file_buff);
+    to_ascii(buffer,file_buff);
+#else
     FILE *fp = NULL;
-    int i = 0;
     fp = fopen("/dev/urandom", "r");
-    fread(random_handle->data, 1, n, fp);
-    random_handle->data[n] = '\0';
+    fread(buffer, 1, n, fp);
     fclose(fp);
-    /*THIS IS SHIT CODE:: HACK, Change it when you have time?*/
-    for(i = 0;i < n;i++)
-    {
-        if(random_handle->data[i] == '\0')
-        {
-            do
-            {
-                random_handle->data[i] = rand() % 256;
-            }while(random_handle->data[i] == '\0');
-        }
-    }
-    return random_handle->data;
+#endif    
+    return buffer;
 }
 
 
@@ -125,23 +124,6 @@ char* stringToHex(char* x, unsigned int len)
 	}
     //output[i] = '\0';
 	return output;    
-#if 0
-    for (i = 0; i < len; ++i)
-    {
-        const unsigned char c = y[i];
-        char temp;
-        temp = lut[c >> 4];
-        printf("%s %d - output: %s \n ",__FUNCTION__,__LINE__,output);
-        printf("%s %d - temp: %c \n ",__FUNCTION__,__LINE__,temp);
-        strcat(output,&temp);
-        temp = lut[c >> 15];
-        printf("%s %d - output: %s \n ",__FUNCTION__,__LINE__,output);
-        printf("%s %d - temp: %c \n ",__FUNCTION__,__LINE__,temp);
-        strcat(output,&temp);
-        printf("%s %d - output: %s \n ",__FUNCTION__,__LINE__,output);
-    }
-#endif    
-    return output;
 }
 
 void* hash_create(void)

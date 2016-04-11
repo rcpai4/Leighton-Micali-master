@@ -13,13 +13,6 @@
 
 #define LMOTS_SHA256_N32_W8  0x08000008 // typecode for lm-ots with n=32, w=8
 
-typedef struct lm_ots
-{
-    void* entropy_handle;
-    list_node_t* private_key;
-    list_node_t* public_key;
-} lm_ots_t;
-
 typedef struct lm_ots_sig
 {
     char C[N];
@@ -28,11 +21,9 @@ typedef struct lm_ots_sig
     list_node_t* y;    
 } lm_ots_sig_t;
 
-lm_ots_t* create_lm_ots(void* entropy_handle);
+list_node_t* generate_private_key(void);
 
-list_node_t* generate_private_key(lm_ots_t* lm_ots_handle);
-
-list_node_t* generate_public_key(lm_ots_t* lm_ots_handle, list_node_t* private_key, char* I, char* q);
+char* generate_public_key(list_node_t* private_key, char* I, char* q);
 
 char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y);
 
@@ -42,8 +33,9 @@ void print_lmots_signature(char* lmots_signature);
 void decode_lmots_sig(char *sig, lm_ots_sig_t* decoded_sig);
 unsigned int bytes_in_lmots_sig(void);
 
-unsigned int  lmots_verify_signature(lm_ots_t* lm_ots_handle,list_node_t*  public_key,char * sig, char* message);
-list_node_t* lmots_sig_to_public_key(char *sig, char* message);
+char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q, char* message, char* entropy_message);
+unsigned int  lmots_verify_signature(char*  public_key,char * sig, char* message);
+char* lmots_sig_to_public_key(char *sig, char* message);
 unsigned int compare(char* src, char* dst, int len);
 
 

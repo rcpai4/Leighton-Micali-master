@@ -197,42 +197,42 @@ def lmots_verify_sig(public_key, sig, message):
 
 # LM-OTS test functions
 #
-I = entropySource.read(31)
-q = uint32ToString(0)
-private_key = lmots_gen_priv()
+#I = entropySource.read(31)
+#q = uint32ToString(0)
+#private_key = lmots_gen_priv()
 
-print "LMOTS private key: "
-for i, x in enumerate(private_key):
-    print "x[" + str(i) + "]:\t" + stringToHex(x)
+#print "LMOTS private key: "
+#for i, x in enumerate(private_key):
+#    print "x[" + str(i) + "]:\t" + stringToHex(x)
     
-public_key = lmots_gen_pub(private_key, I, q)
+#public_key = lmots_gen_pub(private_key, I, q)
 
-print "LMOTS public key: "
-print stringToHex(public_key)
+#print "LMOTS public key: "
+#print stringToHex(public_key)
 
 message = "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized."
 
 print "message: " + message
 
-sig = lmots_gen_sig(private_key, I, q, message)
+#sig = lmots_gen_sig(private_key, I, q, message)
 
-print "LMOTS signature byte length: " + str(len(sig))
+#print "LMOTS signature byte length: " + str(len(sig))
 
-print "LMOTS signature: "
-print_lmots_sig(sig)
+#print "LMOTS signature: "
+#print_lmots_sig(sig)
 
-print "verification: "
-print "true positive test: "
-if (lmots_verify_sig(public_key, sig, message) == 1):
-    print "passed: message/signature pair is valid as expected"
-else:
-    print "failed: message/signature pair is invalid"
+#print "verification: "
+#print "true positive test: "
+#if (lmots_verify_sig(public_key, sig, message) == 1):
+#    print "passed: message/signature pair is valid as expected"
+#else:
+#    print "failed: message/signature pair is invalid"
 
-print "false positive test: "
-if (lmots_verify_sig(public_key, sig, "some other message") == 1):
-    print "failed: message/signature pair is valid (expected failure)"
-else:
-    print "passed: message/signature pair is invalid as expected"
+#print "false positive test: "
+#if (lmots_verify_sig(public_key, sig, "some other message") == 1):
+#    print "failed: message/signature pair is valid (expected failure)"
+#else:
+#    print "passed: message/signature pair is invalid as expected"
 
 #uncomment this to run only LM_OTS
 #sys.exit(0)
@@ -275,7 +275,7 @@ class lms_private_key(object):
     # Algorithm for computing root and other nodes (alternative to Algorithm 6)
     #
     def T(self, j):
-        # print "T(" + str(j) + ")"
+        print "T(" + str(j) + ")"
         if (j >= 2**h):
             self.nodes[j] = H(self.pub[j - 2**h] + self.I + uint32ToString(j) + D_LEAF)
             return self.nodes[j]
@@ -373,12 +373,14 @@ class lms_public_key(object):
 #
 
 print "LMS test"
-
+print "Generating private keys now"
 lms_priv = lms_private_key()
+print "Generated private keys"
 lms_pub = lms_public_key(lms_priv.get_public_key())
+print "Generated public keys"
+sys.exit(1);
 
 # lms_priv.printHex()
-
 for i in range(0, 2**h):
     sig = lms_priv.sign(message)
 

@@ -1,18 +1,10 @@
-
-#define MAIN 1
+/* Common Headers */
 
 #define RDM_DATA_SIZE   1024
-
 #define DEBUG_PRINT printf(" %s %d \n ",__FUNCTION__,__LINE__)
-
-#define FILE_READ       0
+#define FILE_READ       1
 
 typedef struct list_node list_node_t;
-
-typedef struct random_handle
-{
-    char data[RDM_DATA_SIZE];    
-} random_handle_t;
 
 struct list_node
 {
@@ -21,9 +13,9 @@ struct list_node
 };
 
 
-char* entropy_read(random_handle_t* random_handle, unsigned int n);
+char* entropy_read(char* buffer, unsigned int n);
 
-random_handle_t* entropy_create(void);
+void entropy_create(void);
 
 char* stringToHex(char* x, unsigned int len);
 unsigned int stringToUint(unsigned char* x);
