@@ -116,11 +116,46 @@ int lms_test_case(void)
     return 1; 
 }
 
-int main(int charc, char ** charv)
+void usage(char *prog, char *msg) {
+	fprintf(stderr, "%s\nUsage:\t%s [options] \nOptions:\n\t-lmots\tRUN LMOTS TEST CASE\n\t-LMS\tGenerate LMS Testcase\n", msg, prog);
+	exit(-1);
+}
+
+int main(int argc, char ** argv)
 {
-    printf("Hello World of cryptography ECE 5580!! \n ");
-    //lm_ots_test_case();
-    lms_test_case();
+    printf("Hello to the World of cryptography ECE 5580!! \n ");
+    unsigned int  ac = 1;
+    char *av;
+    unsigned int algo = 0;
+    ac = 1;
+	while (ac < argc) 
+    {
+		if (*argv[ac] == '-') 
+        {
+			av = argv[ac] + 1;
+			if (!strcmp(av, "lmots")) {
+				algo |= 1;
+			} else if (!strcmp(av, "lms")) {
+				algo |= 2;
+			} else {
+				usage(argv[0], "Invalid option.");
+			}
+			ac++;
+		} else {
+			if (ac != argc) {
+				usage(argv[0], "Too many arguments.");
+			}
+		}
+	}
+    if (algo & 1)
+    {
+        lm_ots_test_case();
+    }
+
+    if (algo & 2)
+    {
+        lms_test_case();
+    }
     return 0;
 }
 
