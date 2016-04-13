@@ -6,8 +6,8 @@
 #
 
 # define the C compiler to use
+#CC = /media/dvolume/MEng-Spring2016/workspace/gcc-linaro-4.9-2014.11-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc
 CC = gcc
-
 # define any compile-time flags
 CFLAGS = -Wall -g
 
@@ -26,7 +26,7 @@ LFLAGS = -L./
 LIBS = -lm
 
 # define the C source files
-SRCS = main.c commons.c lm_ots.c sha2.c lms.c
+SRCS = main.c commons.c lm_ots.c sha2.c lms.c blake2b.c blake2s.c
 
 # define the C object files 
 #

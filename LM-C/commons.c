@@ -2,28 +2,40 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-
-//For SHA 
 #include <stdio.h>
 #include <sysexits.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
+
+//For SHA 256  
 #include "sha2.h"
+//For BLAKE 
+#include "blake2b.h"
+#include "blake2s.h"
+
 
 //User defined headers
 #include "commons.h"
 
-#if FILE_READ
+
 FILE *fp_file = NULL;
+#if FILE_READ
 char file_buff[1024]; 
 #endif
 
+
+/*TODO: This needs to be a input param */
+unsigned int chosen_has_algo        = BLAKE_2S;
+
 void entropy_create(void)
 {
+    DEBUG_PRINT;
     srand(time(0));
 #if FILE_READ
     fp_file = fopen("inputfile_lms","r");
+#else
+    fp_file = fopen("/dev/urandom", "r");
 #endif
 }
 
@@ -34,10 +46,8 @@ char* entropy_read(char* buffer, unsigned int n)
     strip(file_buff);
     to_ascii(buffer,file_buff);
 #else
-    FILE *fp = NULL;
-    fp = fopen("/dev/urandom", "r");
-    fread(buffer, 1, n, fp);
-    fclose(fp);
+    fread(buffer, 1, n, fp_file);
+    //fclose(fp);
 #endif
     return buffer;
 }
@@ -74,25 +84,6 @@ char* uint16ToString(unsigned short int x,char* result)
     result[2] = '\0';
     return result;
 }
-
-char* uint16ToString_debug(unsigned short int x)
-{
-    char c1 = 0,c2 = 0;
-    char* result =(char*) malloc(3 * sizeof(char));
-    memset(result, 0, 3* sizeof(char));
-    c2 = (char)(x & 0xff);
-    printf("c2:  %d\n ",c2);
-    x = x >> 8;
-    c1 = (char)(x & 0xff);
-    printf("c1: %d\n ",c1);
-    memcpy(result,&c1,1);
-    memcpy(result + 1,&c2,1);
-    printf("res 0: %u\n ",result[0]);
-    printf("res 1: %u\n ",result[1]);
-    printf("res 2: %u\n ",result[2]);    
-    return result;
-}
-
 
 char* uint8ToString(unsigned char x,char* c1)
 {
@@ -133,31 +124,82 @@ char* stringToHex(char* x, unsigned int len)
 
 void* hash_create(void)
 {
-    SHA256_CTX*	ctx256 = (SHA256_CTX*)malloc(sizeof(SHA256_CTX));
-    SHA256_Init(ctx256);
-    return (void*)ctx256;
+    void* hash_ctx = NULL; 
+    if(chosen_has_algo == SHA_256)
+    {
+        hash_ctx = (SHA256_CTX*)malloc(sizeof(SHA256_CTX));
+        SHA256_Init(hash_ctx);
+    }
+    else if(chosen_has_algo == BLAKE_2B)
+    {
+        hash_ctx = (blake2b_ctx*) malloc(sizeof(blake2b_ctx));
+        if(blake2b_init(hash_ctx, N, NULL, 0))
+            return NULL;
+    }
+    else if(chosen_has_algo == BLAKE_2S)
+    {
+        hash_ctx = (blake2s_ctx*) malloc(sizeof(blake2s_ctx));
+        if(blake2s_init(hash_ctx, N, NULL, 0))
+            return NULL;
+    }    
+
+    return (void*)hash_ctx;
+
 }
 
 void hash_update(void* hash_ctx,char* in_buf, unsigned int len)
 {
-    SHA256_Update((SHA256_CTX*)hash_ctx, (unsigned char*)in_buf, len);
+    if(chosen_has_algo == SHA_256)
+    {
+        SHA256_Update((SHA256_CTX*)hash_ctx, (unsigned char*)in_buf, len);
+    }
+    else if(chosen_has_algo == BLAKE_2B)
+    {
+        blake2b_update(hash_ctx, in_buf, len);         
+    }
+    else if(chosen_has_algo == BLAKE_2S)
+    {
+        blake2s_update(hash_ctx, in_buf, len);        
+    }
+
 }
 
 void get_hash(void* hash_ctx,char* out_buf)
 {
-   SHA256_End((SHA256_CTX*)hash_ctx, out_buf);
-   free(hash_ctx);
+    if(chosen_has_algo == SHA_256)
+    {
+        SHA256_End((SHA256_CTX*)hash_ctx, out_buf);
+    }
+    else if(chosen_has_algo == BLAKE_2B)
+    {
+        blake2b_final(hash_ctx, out_buf);
+    }
+    else if(chosen_has_algo == BLAKE_2S)
+    {
+        blake2s_final(hash_ctx, out_buf);
+    }
+    free(hash_ctx);
 }
 
 char* H(char* in_buf,char* out_buf, unsigned int len)
 {
+    if(chosen_has_algo == SHA_256)
+    {
         SHA256_CTX*	ctx256 = (SHA256_CTX*)malloc(sizeof(SHA256_CTX));
         SHA256_Init(ctx256);
         SHA256_Update(ctx256, (unsigned char*)in_buf, len);
         SHA256_End(ctx256,out_buf);
         free(ctx256);
-        ctx256 = NULL;
-        return out_buf;
+    }
+    else if(chosen_has_algo == BLAKE_2B)
+    {
+        blake2b(out_buf, N, NULL, 0, in_buf, len);
+    }
+    else if(chosen_has_algo == BLAKE_2S)
+    {
+        blake2s(out_buf, N, NULL, 0, in_buf, len);
+    }
+    return out_buf;
 }
 
 int hex_to_int(char c)
