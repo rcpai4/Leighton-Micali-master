@@ -43,10 +43,10 @@ char* entropy_read(char* buffer, unsigned int n)
 }
 
 
-char* uint32ToString(unsigned int x)
+char* uint32ToString(unsigned int x,char* data)
 {
-    char* data = (char* )malloc(32 * sizeof(char));
-    memset(data,0,32 * sizeof(unsigned char));
+    //char* data = (char* )malloc(32 * sizeof(char));
+    //memset(data,0,4 * sizeof(char));
     char c1 = 0,c2 = 0,c3 = 0,c4 =0;
     c4 = (char)(x & 0xff);
     x = x >> 8;
@@ -56,21 +56,22 @@ char* uint32ToString(unsigned int x)
     x = x >> 8;
     c1 = (char)(x & 0xff);
     memcpy(data,&c1,sizeof(char));
-    memcpy(data + (1* sizeof(char)),&c2,sizeof(char));
-    memcpy(data + (2 * sizeof(char)),&c3,sizeof(char));
-    memcpy(data + (3 * sizeof(char)),&c4,sizeof(char));
+    memcpy(data + (1),&c2,sizeof(char));
+    memcpy(data + (2),&c3,sizeof(char));
+    memcpy(data + (3),&c4,sizeof(char));
     return data;
 }
 
-char* uint16ToString(unsigned short int x)
+char* uint16ToString(unsigned short int x,char* result)
 {
     char c1 = 0,c2 = 0;
-    char* result =(char*) malloc(3 * sizeof(char));
+    //char* result =(char*) malloc(3 * sizeof(char));
     c2 = (char)(x & 0xff);
     x = x >> 8;
     c1 = (char)(x & 0xff);
     memcpy(result,&c1,1);
     memcpy(result + 1,&c2,1);
+    result[2] = '\0';
     return result;
 }
 
@@ -93,10 +94,11 @@ char* uint16ToString_debug(unsigned short int x)
 }
 
 
-char* uint8ToString(unsigned char x)
+char* uint8ToString(unsigned char x,char* c1)
 {
-    char* c1 = (char*) malloc(sizeof(unsigned char));
-    *c1 = (char)(x & 0xff);
+    //char* c1 = (char*) malloc(sizeof(unsigned char));
+    c1[0] = (char)(x & 0xff);
+    c1[1] = '\0';
     return c1;
 }
 
@@ -117,17 +119,15 @@ char* stringToHex(char* x, unsigned int len)
     static const char* const lut = "0123456789ABCDEF";
     char* y = x;    
     size_t i = 0;
-    char* output = (char*) malloc(2*len*sizeof(char)); 
+    char* output = (char*) malloc((2*len + 1)*sizeof(char)); 
     memset(output,0,sizeof(2*len*sizeof(char)) + 1);
 	
 	for(i=0; i<len; i++) {
         const unsigned char c = y[i];
 		output[i*2] = lut[c >> 4];
-        //printf("%s %d - temp: %c \n ",__FUNCTION__,__LINE__,output[i*2]);
 		output[i*2+1] = lut[c & 0x0f]; //nibbleToChar(bytes[i] & 0x0f);
-        //printf("%s %d - temp: %c \n ",__FUNCTION__,__LINE__,output[i*2 +1]);
 	}
-    //output[i] = '\0';
+    output[2*i] = '\0';
 	return output;    
 }
 
@@ -146,17 +146,17 @@ void hash_update(void* hash_ctx,char* in_buf, unsigned int len)
 void get_hash(void* hash_ctx,char* out_buf)
 {
    SHA256_End((SHA256_CTX*)hash_ctx, out_buf);
+   free(hash_ctx);
 }
 
 char* H(char* in_buf,char* out_buf, unsigned int len)
 {
-    	SHA256_CTX	ctx256;
-        SHA256_Init(&ctx256);
-        SHA256_Update(&ctx256, (unsigned char*)in_buf, len);
-        SHA256_End(&ctx256,out_buf);
-        //printf("out_buf: %s \n",out_buf);
-        //printf("out_buf again:");
-        //print_buffer(out_buf,64);
+        SHA256_CTX*	ctx256 = (SHA256_CTX*)malloc(sizeof(SHA256_CTX));
+        SHA256_Init(ctx256);
+        SHA256_Update(ctx256, (unsigned char*)in_buf, len);
+        SHA256_End(ctx256,out_buf);
+        free(ctx256);
+        ctx256 = NULL;
         return out_buf;
 }
 
@@ -168,12 +168,14 @@ int hex_to_int(char c)
         if(result > 9) result--;
         return result;
 }
+
 int hex_to_ascii(char c, char d)
 {
         int high = hex_to_int(c) * 16;
         int low = hex_to_int(d);
         return high+low;
 }
+
 void substr(char dest[], char src[], int offset, int len)
 {
     int i;
@@ -230,5 +232,4 @@ unsigned int power(unsigned int x, unsigned int y)
         sum = sum * x;
     }
     return sum;
-
 }

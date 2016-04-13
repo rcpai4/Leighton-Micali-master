@@ -19,9 +19,9 @@ unsigned int power(unsigned int x, unsigned int y);
 void entropy_create(void);
 
 char* stringToHex(char* x, unsigned int len);
-char* uint8ToString(unsigned char x);
-char* uint16ToString(unsigned short int x);
-char* uint32ToString(unsigned int x);
+char* uint8ToString(unsigned char x,char* c1);
+char* uint16ToString(unsigned short int x,char* result);
+char* uint32ToString(unsigned int x,char* data);
 unsigned int stringToUint(char* x,unsigned int len);
 
 

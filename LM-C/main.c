@@ -20,10 +20,11 @@ int lm_ots_test_case(void)
     char* q = (char* )malloc(4 * sizeof(char));
     char* message = (char* )malloc(1024 * sizeof(char));
     unsigned int   i = 0;
+    char temp_string[4] = {0};
     entropy_create();
     
     entropy_read(I,31);
-    memcpy(q,uint32ToString(0),4*sizeof(unsigned char));
+    memcpy(q,uint32ToString(0,temp_string),4*sizeof(unsigned char));
     lm_ots_private_key = generate_private_key();
     temp_node = lm_ots_private_key; 
 
