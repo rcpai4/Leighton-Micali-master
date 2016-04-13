@@ -333,6 +333,8 @@ def decode_lms_sig(sig):
 
 def print_lms_sig(sig):
     lmots_sig, path = decode_lms_sig(sig)
+    #print "COMPLETE SIG: " + stringToHex(sig)
+    #print "LMOTS SIG: " + stringToHex(lmots_sig)
     print_lmots_sig(lmots_sig)
     for i, e in enumerate(path):
         print "path[" + str(i) + "]:\t" + str(stringToHex(e))
@@ -347,11 +349,31 @@ class lms_private_key(object):
     def T(self, j):
         # print "T(" + str(j) + ")"
         if (j >= 2**h):
+            tempr = self.pub[j - 2**h] + self.I + uint32ToString(j) + D_LEAF
             self.nodes[j] = H(self.pub[j - 2**h] + self.I + uint32ToString(j) + D_LEAF)
-            return self.nodes[j]
+            #print "T INPUT PUB: " + stringToHex(self.pub[j - 2**h])
+            #print "T INPUT I: " + stringToHex(self.I)
+            #print "T INPUT j: " + stringToHex(uint32ToString(j))
+            #print "T INPUT D_LEAF: " + stringToHex(D_LEAF)
+            #print "T INPUT " + stringToHex(tempr)
         else:
-            self.nodes[j] = H(self.T(2*j) + self.T(2*j+1) + self.I + uint32ToString(j) + D_INTR)
-            return self.nodes[j]
+            input_temp = self.T(2*j)
+            input_temp_1 = self.T(2*j+1)
+            tempr = input_temp + input_temp_1
+            tempr = tempr + self.I
+            tempr = tempr + uint32ToString(j)
+            tempr = tempr + D_INTR
+            self.nodes[j] = H(tempr)
+            #print "INPUT T(" + str(2*j) + "): " + stringToHex(input_temp)
+            #print "INPUT T(" + str(2*j +1)+ "): " + stringToHex(input_temp_1)
+            #print "INPUT I: " + stringToHex(self.I)            
+            #print "INPUT j: " + stringToHex(uint32ToString(j))                        
+            #print "INPUT D_INTR: " + stringToHex(D_INTR)            
+            #print "INPUT: " + stringToHex(tempr)
+
+        #print "T(" + str(j) + "): " + stringToHex(self.nodes[j]);
+        #sys.exit(1);
+        return self.nodes[j]
 
     def __init__(self):
         self.I = entropySource.read(31)
@@ -423,13 +445,17 @@ class lms_public_key(object):
         tmp = lmots_sig_to_pub(lmots_sig, message)
         tmp = H(tmp + I + uint32ToString(node_num) + D_LEAF)
         while node_num > 1:
-            # print "S(" + str(node_num) + "):\t" + stringToHex(tmp)
+            print "S(" + str(node_num) + "):\t" + stringToHex(tmp)
             if (node_num % 2):
                 # print "adding node " + str(node_num - 1)
-                tmp = H(pathvalue.next() + tmp + I + uint32ToString(node_num/2) + D_INTR)
+                temp_inp = pathvalue.next() + tmp + I + uint32ToString(node_num/2) + D_INTR
+                print "INPUT: " + stringToHex(temp_inp); 
+                tmp = H(temp_inp)
             else:
                 # print "adding node " + str(node_num + 1)
-                tmp = H(tmp + pathvalue.next() + I + uint32ToString(node_num/2) + D_INTR)
+                temp_inp = tmp + pathvalue.next() + I + uint32ToString(node_num/2) + D_INTR
+                print "INPUT: " + stringToHex(temp_inp); 
+                tmp = H(temp_inp)
             node_num = node_num/2
         # print "pubkey: " + stringToHex(tmp)
         if (tmp == self.value):
@@ -448,26 +474,28 @@ print "LMS test"
 lms_priv = lms_private_key()
 lms_pub = lms_public_key(lms_priv.get_public_key())
 
+print " LMS: PUBLIC KEY " + stringToHex(lms_priv.get_public_key())
 # lms_priv.printHex()
 
-for i in range(0, 2**h):
+for i in range(0, 2):
     sig = lms_priv.sign(message)
 
-    #print "LMS signature byte length: " + str(len(sig))
-
-    #print_lms_sig(sig)
+    print "LMS signature byte length: " + str(len(sig))
+    print_lms_sig(sig)
+    
     print "true positive test"
     if (lms_pub.verify(message, sig) == 1):
         print "passed: LMS message/signature pair is valid"
     else:
         print "failed: LMS message/signature pair is invalid"
-
+    
     print "false positive test"
     if (lms_pub.verify("other message", sig) == 1):
         print "failed: LMS message/signature pair is valid (expected failure)"
     else:
         print "passed: LMS message/signature pair is invalid as expected"
-
+    sys.exit(1)
+    
 # Hierarchical LMS signatures (HLMS)
 
 def encode_hlms_sig(pub2, sig1, lms_sig):

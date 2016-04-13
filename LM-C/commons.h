@@ -2,7 +2,7 @@
 
 #define RDM_DATA_SIZE   1024
 #define DEBUG_PRINT printf(" %s %d \n ",__FUNCTION__,__LINE__)
-#define FILE_READ       1
+#define FILE_READ       0
 
 typedef struct list_node list_node_t;
 
@@ -18,10 +18,10 @@ char* entropy_read(char* buffer, unsigned int n);
 void entropy_create(void);
 
 char* stringToHex(char* x, unsigned int len);
-unsigned int stringToUint(unsigned char* x);
 char* uint8ToString(unsigned char x);
 char* uint16ToString(unsigned short int x);
 char* uint32ToString(unsigned int x);
+unsigned int stringToUint(unsigned char* x,unsigned int len);
 
 
 void* hash_create(void);

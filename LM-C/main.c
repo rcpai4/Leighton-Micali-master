@@ -13,41 +13,22 @@ int lm_ots_test_case(void);
 int lm_ots_test_case(void)
 {
     list_node_t* lm_ots_private_key = NULL;
-    list_node_t* lm_ots_public_key = NULL;
+    char* lm_ots_public_key = NULL;
     char* lm_ots_signature = NULL;
     list_node_t* temp_node = NULL;
     char* I = (char* )malloc(31 * sizeof(char));
     char* q = (char* )malloc(4 * sizeof(char));
     char* message = (char* )malloc(1024 * sizeof(char));
     unsigned int   i = 0;
-    char* entropy_message = NULL; 
-    
     entropy_create();
-#if FILE_READ
-    FILE *fp = NULL;
-    fp = fopen("inputfile","r");
-    char file_buff[1024]; 
-#endif
+    
     entropy_read(I,31);
-#if FILE_READ
-    fgets(file_buff,sizeof file_buff,fp);
-    strip(file_buff);
-    to_ascii(I,file_buff);
-#endif
     memcpy(q,uint32ToString(0),4*sizeof(unsigned char));
-#if FILE_READ    
-    fgets(file_buff,sizeof file_buff,fp);
-#endif
     lm_ots_private_key = generate_private_key();
     temp_node = lm_ots_private_key; 
 
     while(temp_node != NULL)
     {
-#if FILE_READ
-    fgets(file_buff,sizeof file_buff,fp);
-    strip(file_buff);
-    to_ascii(temp_node->data,file_buff);
-#endif        
         printf("PRIV KEY[%d]: %s \n",i,stringToHex(temp_node->data,N));
         temp_node = temp_node->next;
         i++;
@@ -58,14 +39,8 @@ int lm_ots_test_case(void)
     strcpy(message,"The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized.");
 
     printf("message: %s\n", message);
-#if FILE_READ
-    entropy_message = (char *) malloc( 1024 * sizeof(char));   
-    fgets(file_buff,sizeof file_buff,fp);
-    strip(file_buff);
-    to_ascii(entropy_message,file_buff);
-#endif            
-    lm_ots_signature = lmots_generate_signature(lm_ots_private_key, I, q, message,entropy_message);
-    
+    unsigned int lm_ots_len = 0; 
+    lm_ots_signature = lmots_generate_signature(lm_ots_private_key, I, q, message,&lm_ots_len);
     print_lmots_signature(lm_ots_signature);
     
     printf("verification: \n");
@@ -94,20 +69,51 @@ int lm_ots_test_case(void)
 int lms_test_case(void)
 {
     printf(" LMS TEST CASE \n ");
-    list_node_t* lm_ots_private_key = NULL;
-    list_node_t* lm_ots_public_key = NULL;
     lms_priv_key_t* lms_private_key = NULL; 
-    char* lm_ots_signature = NULL;
+    unsigned int sign_len = 0;
+    char*           lms_public_key = NULL;
     list_node_t* temp_node = NULL;
     char* message = (char* )malloc(1024 * sizeof(char));
-#if FILE_READ    
-    char* entropy_message = NULL; 
-#endif
+    char* sig = NULL;
+    unsigned int i = 0;
+   strcpy(message,"The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized.");
+    printf("message: %s\n", message);    
     
     entropy_create();
     lms_private_key = create_lms_priv_key();
-    //lms_pub = lms_public_key(lms_priv.get_public_key())
+    lms_public_key = get_public_key(lms_private_key);
+    printf(" LMS PUBLIC KEY: %s \n",stringToHex(lms_public_key,32));
+    
+    
+    for(i = 0; i < (unsigned int) pow(2,HEIGHT); i++)
+    {
+        sig  = lms_generate_signature(lms_private_key,message,&sign_len);
+        //printf("SIGNATURE %s \n",stringToHex(sig,sign_len));
+        print_lms_sig(sig,sign_len);
 
+        printf("SIGNATURE %d \n",i);
+        printf("True positive test \n");
+        if (lms_verify_signature(sig,lms_public_key,message,sign_len) == 1)
+        {
+            printf("passed: LMS message/signature pair is valid \n ");
+        }
+        else
+        {
+            printf("failed: LMS message/signature pair is invalid \n ");
+        }
+    
+        printf("False positive test \n ");
+        if (lms_verify_signature(sig,lms_public_key,"other message",sign_len) == 1)
+        {
+            printf("failed: LMS message/signature pair is valid (expected failure) \n ");
+        }
+        else
+        {
+            printf("passed: LMS message/signature pair is invalid as expected \n ");
+        }
+    }
+
+    return 1; 
 }
 
 int main(int charc, char ** charv)

@@ -88,19 +88,16 @@ char* generate_public_key(list_node_t* private_key, char* I, char* q)
     return public_key;
 }
 
-char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q, char* message, char* entropy_message)
+char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q, char* message, unsigned int* len)
 {
     char *C = (char *) malloc(sizeof(char) * N);
     char *temp_hash_output = (char *) malloc(sizeof(char) * (2*N + 1));
     void* hash_handle = hash_create();
     int i = 0, j = 0;
-    entropy_read(C,N);
-#if FILE_READ 
-    // Overwrite the random array
-    memcpy(C,entropy_message,N);
-#endif
-    //printf(" C: %s \n",stringToHex(C,32));
     char temp_hashQ[1024];
+    
+    //printf(" C: %s \n",stringToHex(C,32));
+    entropy_read(C,N);
     memcpy(temp_hashQ,message, strlen(message));
     memcpy(temp_hashQ + strlen(message),C, 32);
     memcpy(temp_hashQ + strlen(message) + 32,I, 31);
@@ -140,7 +137,7 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
             //printf(" OUTPUT : %s \n ",stringToHex(temp_node->data ,N));
         }
         memcpy(temp_node->data,temp_input,32);
-        printf("%d [%s] \n ",i,stringToHex(temp_node->data,32));
+        //printf("%d [%s] \n ",i,stringToHex(temp_node->data,32));
         i++;
         curr_priv_key_node = curr_priv_key_node->next;
         if(curr_node == NULL)
@@ -152,7 +149,7 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
         curr_node->next = temp_node;
         curr_node = temp_node;
     }
-    return encode_lmots_signature(C, I, q, root);    
+    return encode_lmots_signature(C, I, q, root,len);
 }
 
 
@@ -176,11 +173,11 @@ char* checksum(unsigned char *x, unsigned int len)
     return result;
 }
 
-char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y)
+char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y,unsigned int* sign_len)
 {
     char* result = (char*)malloc(2*1024* sizeof(char));
-    int len = 0;
-    list_node_t*  temp_node;
+    unsigned int len = 0;
+    list_node_t*  temp_node = NULL;
     memcpy(result,uint32ToString(LMOTS_SHA256_N32_W8),4*sizeof(char));
     memcpy(result + (4 * sizeof(char)), C, N*sizeof(char));
     memcpy(result + ((4 + N) * sizeof(char)), I, 31*sizeof(char));
@@ -195,6 +192,7 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y)
         len = len + (N*sizeof(char));
         temp_node  = temp_node->next;
     }
+    *sign_len = len;
     //printf("signture: %s \n ", stringToHex(result,len));
     return result;
 }

@@ -100,10 +100,15 @@ char* uint8ToString(unsigned char x)
     return c1;
 }
 
-unsigned int stringToUint(unsigned char* x)
+unsigned int stringToUint(unsigned char* x,unsigned int len)
 {
-    /*TODO: */
-    return 0;
+    unsigned int sum = 0;
+    unsigned int i = 0;
+    for( i = 0; i < len; i++)
+    {
+        sum = sum * 256 + x[i];
+    }
+    return sum;    
 }
 
 
