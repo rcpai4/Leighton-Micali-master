@@ -54,7 +54,7 @@ int lm_ots_test_case(void)
         printf("failed: message/signature pair is invalid \n ");
     }
     
-    if(lmots_verify_signature(lm_ots_public_key,lm_ots_signature,message))
+    if(lmots_verify_signature(lm_ots_public_key,lm_ots_signature,"other message"))
     {
         printf("failed: message/signature pair is valid (expected failure) \n");
     }
@@ -72,10 +72,10 @@ int lms_test_case(void)
     lms_priv_key_t* lms_private_key = NULL; 
     unsigned int sign_len = 0;
     char*           lms_public_key = NULL;
-    list_node_t* temp_node = NULL;
     char* message = (char* )malloc(1024 * sizeof(char));
     char* sig = NULL;
     unsigned int i = 0;
+    NUM_LEAF_NODES = power(2,HEIGHT);    
    strcpy(message,"The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized.");
     printf("message: %s\n", message);    
     
@@ -85,7 +85,7 @@ int lms_test_case(void)
     printf(" LMS PUBLIC KEY: %s \n",stringToHex(lms_public_key,32));
     
     
-    for(i = 0; i < (unsigned int) pow(2,HEIGHT); i++)
+    for(i = 0; i < NUM_LEAF_NODES ; i++)
     {
         sig  = lms_generate_signature(lms_private_key,message,&sign_len);
         //printf("SIGNATURE %s \n",stringToHex(sig,sign_len));

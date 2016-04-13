@@ -15,9 +15,9 @@ lms_priv_key_t* create_lms_priv_key(void)
     unsigned  int q = 0;
     
     entropy_read(lms_private_key->I,31);
-    lms_private_key->priv  = (list_node_t *) malloc(((unsigned int )pow(2,HEIGHT)) *sizeof(list_node_t));
-    lms_private_key->pub   = (list_node_t *) malloc(((unsigned int )pow(2,HEIGHT)) *sizeof(list_node_t));
-    for(q = 0; q < (unsigned int)pow(2,HEIGHT); q++)
+    lms_private_key->priv  = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
+    lms_private_key->pub   = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
+    for(q = 0; q < NUM_LEAF_NODES; q++)
     {
         lms_private_key->priv[(unsigned int)q].data = (void *)generate_private_key();
         lms_private_key->pub[(unsigned int)q].data  = (void *)generate_public_key(
@@ -25,8 +25,9 @@ lms_priv_key_t* create_lms_priv_key(void)
                                                         lms_private_key->I, uint32ToString(q));
         printf(" Generating %u th OTS key PUBLIC KEY %s \n",q,stringToHex(lms_private_key->pub[(unsigned int)q].data,N));
     }
-    lms_private_key->nodes  = (list_node_t *) malloc( 2* ((unsigned int )pow(2,HEIGHT)) *sizeof(list_node_t));
-    for(q = 0; q < (unsigned int)2* pow(2,HEIGHT); q++)
+    
+    lms_private_key->nodes  = (list_node_t *) malloc( 2* NUM_LEAF_NODES *sizeof(list_node_t));
+    for(q = 0; q < 2* NUM_LEAF_NODES; q++)
     {
         lms_private_key->nodes[(unsigned int)q].data = (char *)malloc(32 * sizeof(char));
     }
@@ -38,7 +39,7 @@ lms_priv_key_t* create_lms_priv_key(void)
 char* T(lms_priv_key_t* private_key, unsigned int j)
 {
         list_node_t* lm_ots_pub_key = NULL;
-        unsigned int height_index = (unsigned int)pow(2,HEIGHT);
+        unsigned int height_index = NUM_LEAF_NODES;
         char temp_input[1024] = {0};
 
         if (j >= height_index)
@@ -87,7 +88,7 @@ char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsig
     char* sig = NULL;
     list_node_t* path = NULL;
     unsigned int len_lm_ots_sig = 0; 
-    if (lms_private_key->leaf_num >= (unsigned int)pow(2,HEIGHT))
+    if (lms_private_key->leaf_num >= NUM_LEAF_NODES)
         return NULL;
    sig = lmots_generate_signature((list_node_t* )lms_private_key->priv[lms_private_key->leaf_num].data, 
                                     lms_private_key->I,
@@ -103,7 +104,7 @@ char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsig
 
 list_node_t* get_path(lms_priv_key_t* lms_private_key, unsigned int leaf_num)
 {
-    unsigned int node_num = leaf_num + (unsigned int)pow(2,HEIGHT);
+    unsigned int node_num = leaf_num + NUM_LEAF_NODES;
     //printf("signing node %d \n ",node_num);
     list_node_t* root_node = NULL;
     list_node_t* temp_node = NULL;
@@ -229,7 +230,7 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
     decode_lms_sig(sig, &lms_signature,len_sig);
     temp_node = lms_signature.path;
     decode_lmots_sig(lms_signature.lm_ots_sig,&decoded_sig);// note: only q is actually needed here
-    node_num = stringToUint(decoded_sig.q,4) +(unsigned int) pow(2,HEIGHT);
+    node_num = stringToUint(decoded_sig.q,4) + NUM_LEAF_NODES;
     
     char* tmp = lmots_sig_to_public_key(lms_signature.lm_ots_sig, message);
     memcpy(temp_input,tmp,N*sizeof(char));

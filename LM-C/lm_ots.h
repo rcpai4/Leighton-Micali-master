@@ -28,7 +28,7 @@ char* generate_public_key(list_node_t* private_key, char* I, char* q);
 char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y,unsigned int* sign_len);
 
 
-char* checksum(unsigned char *x, unsigned int len);
+char* checksum(char *x, unsigned int len);
 
 void print_lmots_signature(char* lmots_signature);
 void decode_lmots_sig(char *sig, lm_ots_sig_t* decoded_sig);

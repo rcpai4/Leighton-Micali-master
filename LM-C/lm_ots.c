@@ -111,7 +111,7 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
     hash_update(hash_handle,uint8ToString(D_MESG), 1);
     get_hash(hash_handle,temp_hash_output);
     //printf(" hashQ: %s \n",stringToHex(temp_hash_output,32));
-    memcpy(temp_hash_output + 32 * sizeof(char),(void *)checksum(temp_hash_output,32),2 *sizeof(char));
+    memcpy(temp_hash_output + 32,(void *)checksum(temp_hash_output,32),2 *sizeof(char));
     //printf("V: %s \n ",stringToHex(temp_hash_output ,34));
     list_node_t* root     =  NULL;
     list_node_t* temp_node = NULL;
@@ -153,7 +153,7 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
 }
 
 
-char* checksum(unsigned char *x, unsigned int len)
+char* checksum(char *x, unsigned int len)
 {
     char c1 = 0,c2 = 0;
     char* result =(char*) malloc(3 * sizeof(char));    
@@ -324,9 +324,6 @@ unsigned int compare(char* src, char* dst, int len)
             return 0;
         }
     }
+    return 1;
     
-    if(i == len)
-    {
-        return 1;
-    }
 }

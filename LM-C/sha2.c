@@ -630,7 +630,7 @@ void SHA256_Final(sha2_byte digest[], SHA256_CTX* context) {
 
 char *SHA256_End(SHA256_CTX* context, char buffer[]) {
 	sha2_byte	digest[SHA256_DIGEST_LENGTH], *d = digest;
-	int		i;
+	//int		i;
 
 	/* Sanity check: */
 	assert(context != (SHA256_CTX*)0);

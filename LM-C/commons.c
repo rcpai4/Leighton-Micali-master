@@ -38,7 +38,7 @@ char* entropy_read(char* buffer, unsigned int n)
     fp = fopen("/dev/urandom", "r");
     fread(buffer, 1, n, fp);
     fclose(fp);
-#endif    
+#endif
     return buffer;
 }
 
@@ -100,7 +100,7 @@ char* uint8ToString(unsigned char x)
     return c1;
 }
 
-unsigned int stringToUint(unsigned char* x,unsigned int len)
+unsigned int stringToUint(char* x,unsigned int len)
 {
     unsigned int sum = 0;
     unsigned int i = 0;
@@ -182,18 +182,18 @@ void substr(char dest[], char src[], int offset, int len)
     dest[i] = '\0';
 }
 
-void to_ascii(unsigned char* dest, unsigned char *text)
+void to_ascii(char* dest, char *text)
 {
   unsigned int i = 0;
   for(i = 0 ; i<strlen(text); i=i+2)
   {
-    unsigned char chunk[3];
+    char chunk[3];
     substr(chunk,text, i,2);
     //printf("\n [%d] :%s \n ",i,chunk);
-    unsigned char chuck_conv[2];
+    char chuck_conv[2];
     chuck_conv[0] =  hex_to_ascii(chunk[0],chunk[1]);
     //sprintf (chuck_conv, "&#37;c", strtoul(chunk, NULL, 16));
-     memcpy(dest + (i/2), &chuck_conv[0], sizeof(unsigned char));
+     memcpy(dest + (i/2), &chuck_conv[0], sizeof(char));
   }
 }
 
@@ -218,4 +218,17 @@ void print_buffer(char* print,unsigned int len)
         printf("%c",print[i]);
     }
     printf("\n ");
+}
+
+unsigned int power(unsigned int x, unsigned int y)
+{
+    unsigned int i = 0;
+    unsigned int sum = x;
+
+    for(i = 1; i < y;i++)
+    {
+        sum = sum * x;
+    }
+    return sum;
+
 }
