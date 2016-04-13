@@ -12,12 +12,15 @@ All the code(LM-OTS and LMS) is placed under Lm-C directory. Just go to this dir
 the following command.
 
 make clean
+
 make all
 
 To run LM-OTS test case run:
+
 ./main_lm -lmots
 
 To run LMS test case run:
+
 ./main_lm -lms
 
 To change the Hashing algorithm, goto to file commons.c. There is a global
