@@ -17,6 +17,7 @@ list_node_t* generate_private_key(void)
     for(i = 0; i < P; i++)
     {
         temp_node = (list_node_t*)malloc(sizeof(list_node_t));
+        temp_node->next = NULL;
         temp_node->data = malloc(N * sizeof(char));
         entropy_read(temp_node->data,N);
         if(curr_node == NULL)
@@ -163,13 +164,15 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y,unsigned 
     }
     temp_node = y; 
     
-    //while(temp_node != NULL)
-    //{
-    //    list_node_t*  prev_node = temp_node->next;
-    //    free(temp_node->data);
-    //    free(temp_node);
-    //    temp_node = prev_node;
-    //}
+    while(temp_node != NULL)
+    {
+        //printf("DATA: %p \n ",temp_node->data);
+        //printf("NODE: %p \n ",temp_node);
+        list_node_t*  prev_node = temp_node->next;
+        free(temp_node->data);
+        free(temp_node);
+        temp_node = prev_node;
+    }
 
     *sign_len = len;
     //printf("signture: %s \n ", stringToHex(result,len));
@@ -192,6 +195,10 @@ void print_lmots_signature(char* lmots_signature)
         temp_node = temp_node->next;
         i++;
     }
+    
+    /* Cleanup the keys we created */
+    lm_ots_cleanup_keys(decoded_sig.y,NULL);
+
 }
 
 void decode_lmots_sig(char *sig, lm_ots_sig_t* decoded_sig)
@@ -210,6 +217,7 @@ void decode_lmots_sig(char *sig, lm_ots_sig_t* decoded_sig)
     {
         temp_node = (list_node_t*)malloc(sizeof(list_node_t));
         temp_node->data = malloc(N * sizeof(char));
+        temp_node->next = NULL;
         memcpy(temp_node->data,sig + pos,N);
         pos = pos + N;
         if(curr_node == NULL)
@@ -229,6 +237,7 @@ unsigned int bytes_in_lmots_sig(void)
 
 unsigned int  lmots_verify_signature(char* public_key,char * sig, char* message)
 {
+
     char* z = lmots_sig_to_public_key(sig, message);
     
     if(compare(public_key,z,N))
@@ -287,25 +296,12 @@ char* lmots_sig_to_public_key(char *sig, char* message)
     hash_update(hash_handle,uint8ToString(D_PBLC,temp_string),1);
     
     get_hash(hash_handle,public_key);
+    
+    /* Cleanup the keys we created */
+    lm_ots_cleanup_keys(decoded_sig.y,NULL);
     return public_key;
 }
 
-unsigned int compare(char* src, char* dst, int len)
-{
-    unsigned int i = 0;  
-    for( i = 0; i < len; i++)
-    {
-        if(src[i] == dst[i])
-        {
-            continue;
-        }
-        else
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
 
 void lm_ots_cleanup_keys(list_node_t*  priv_key, char* pub_key)
 {

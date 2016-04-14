@@ -49,3 +49,4 @@ void to_ascii(char* dest,char *text);
 void strip(char *s);
 unsigned int power(unsigned int x, unsigned int y);
 void print_buffer(char* print,unsigned int len);
+unsigned int compare(char* src, char* dst, int len);

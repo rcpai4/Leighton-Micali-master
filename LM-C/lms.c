@@ -24,6 +24,8 @@ lms_priv_key_t* create_lms_priv_key(void)
         lms_private_key->pub[(unsigned int)q].data  = (void *)generate_public_key(
                                                         (list_node_t* )lms_private_key->priv[(unsigned int)q].data,\
                                                         lms_private_key->I, uint32ToString(q,temp_string));
+        lms_private_key->priv[(unsigned int)q].next = NULL;
+        lms_private_key->pub[(unsigned int)q].next  = NULL;    
         printf(" Generating %u th OTS key PUBLIC KEY %s \n",q,stringToHex(lms_private_key->pub[(unsigned int)q].data,N));
     }
     
@@ -123,6 +125,7 @@ list_node_t* get_path(lms_priv_key_t* lms_private_key, unsigned int leaf_num)
     {
         temp_node = (list_node_t*)malloc(sizeof(list_node_t));
         temp_node->data = (char*) malloc(32*sizeof(char));
+        temp_node->next = NULL;
         if (node_num % 2)
         {
             //printf("path %d: %s \n ", node_num - 1,stringToHex(lms_private_key->nodes[node_num - 1].data,N*sizeof(char)));
@@ -195,6 +198,7 @@ void decode_lms_sig(char* sig,lms_sig_t* lms_signature,unsigned int len_sig)
         //print "sig[" + str(i) + "]:\t" + stringToHex(sig[pos:pos+n])
         temp_node = (list_node_t*)malloc(sizeof(list_node_t));
         temp_node->data =(char* ) malloc(32 *sizeof(char));
+        temp_node->next = NULL;
         memcpy(temp_node->data, sig + pos, N);
         pos = pos + N;
         if(curr_node == NULL)

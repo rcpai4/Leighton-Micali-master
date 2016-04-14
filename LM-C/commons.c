@@ -276,3 +276,20 @@ unsigned int power(unsigned int x, unsigned int y)
     }
     return sum;
 }
+
+unsigned int compare(char* src, char* dst, int len)
+{
+    unsigned int i = 0;  
+    for( i = 0; i < len; i++)
+    {
+        if(src[i] == dst[i])
+        {
+            continue;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    return 1;
+}

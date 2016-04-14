@@ -36,7 +36,6 @@ unsigned int bytes_in_lmots_sig(void);
 char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q, char* message,unsigned int * len);
 unsigned int  lmots_verify_signature(char*  public_key,char * sig, char* message);
 char* lmots_sig_to_public_key(char *sig, char* message);
-unsigned int compare(char* src, char* dst, int len);
 
 void lm_ots_cleanup_keys(list_node_t*  priv_key, char* pub_key);
 
