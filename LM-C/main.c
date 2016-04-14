@@ -19,7 +19,7 @@ int lm_ots_test_case(void)
     char*           q                   = (char* )malloc(4 * sizeof(char));
     char*           message             = (char* )malloc(MSG_SIZE * sizeof(char));
     unsigned int    i                   = 0;
-    char            temp_string[4]      = {0};
+    char            temp_string[5]      = {0};
     unsigned int    lm_ots_len          = 0;     
     printf(" LM-OTS TEST CASE \n ");    
     /* Create Random number Generator */
@@ -36,10 +36,8 @@ int lm_ots_test_case(void)
         i++;
     }
     
-    DEBUG_PRINT;
     /* Generate Public Key */
     lm_ots_public_key = generate_public_key(lm_ots_private_key, I,q);
-    DEBUG_PRINT;
     printf("\n PUB KEY : %s \n",stringToHex(lm_ots_public_key,32));
     strcpy(message,"The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized.");
     printf("message: %s\n", message);
@@ -101,11 +99,10 @@ int lms_test_case(void)
     /* Generate Signature */    
     for(i = 0; i < NUM_LEAF_NODES ; i++)
     {
+        printf("SIGNATURE %d \n",i);
         sig  = lms_generate_signature(lms_private_key,message,&sign_len);
         //printf("SIGNATURE %s \n",stringToHex(sig,sign_len));
         print_lms_sig(sig,sign_len);
-
-        printf("SIGNATURE %d \n",i);
         printf("True positive test \n");
         if (lms_verify_signature(sig,lms_public_key,message,sign_len) == 1)
         {

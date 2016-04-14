@@ -26,7 +26,7 @@ char file_buff[1024];
 
 
 /*TODO: This needs to be a input param */
-unsigned int chosen_has_algo        = BLAKE_2S;
+unsigned int chosen_has_algo        = SHA_256;
 
 void entropy_create(void)
 {
@@ -69,6 +69,7 @@ char* uint32ToString(unsigned int x,char* data)
     memcpy(data + (1),&c2,sizeof(char));
     memcpy(data + (2),&c3,sizeof(char));
     memcpy(data + (3),&c4,sizeof(char));
+    data[4] = '\0';
     return data;
 }
 

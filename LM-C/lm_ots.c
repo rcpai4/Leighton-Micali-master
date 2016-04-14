@@ -36,7 +36,7 @@ char* generate_public_key(list_node_t* private_key, char* I, char* q)
     void* hash_handle = hash_create();
     unsigned int i = 0, j = 0;
     char* public_key = (char* )malloc(N * sizeof(char));
-    char temp_string[4] = {0};
+    char temp_string[5] = {0};
     list_node_t* temp_node =  private_key;    
     char* temp_text = (char *)malloc(MSG_SIZE* sizeof(char));
     
@@ -71,13 +71,12 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
     char            temp_hash_output[2*N + 1]   = {0};
     void*           hash_handle                 = hash_create();
     int             i = 0, j = 0;
-    char            temp_string[4]              = {0};
+    char            temp_string[5]              = {0};
     list_node_t*    root                        = NULL;
     list_node_t*    temp_node                   = NULL;
     list_node_t*    curr_node                   = NULL;
     list_node_t*    curr_priv_key_node          = lm_ots_private_key;
     char            temp_input[N + ENTROPY_SIZE + 4 + 2 + 1 + 1] = {0};
-
     entropy_read(C,N);
     hash_update(hash_handle,message, strlen(message));
     hash_update(hash_handle,C, N);
@@ -90,7 +89,8 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
     while(curr_priv_key_node != NULL)
     {
         temp_node = (list_node_t*)malloc(sizeof(list_node_t));
-        temp_node->data = malloc(N * sizeof(char));
+        temp_node->next = NULL;
+        temp_node->data = (char *)malloc(N * sizeof(char));
         memcpy(temp_input,curr_priv_key_node->data, N);
         for (j = 0; j <  (unsigned char)(temp_hash_output[i]); j++)
         {
@@ -145,7 +145,8 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y,unsigned 
     char* result = (char*)malloc(bytes_in_lmots_sig());
     unsigned int len = 0;
     list_node_t*  temp_node = NULL;
-    char temp_string[4] = {0};
+    char temp_string[5] = {0};
+    unsigned int i = 0;
     memcpy(result,uint32ToString(LMOTS_SHA256_N32_W8,temp_string),4*sizeof(char));
     memcpy(result + (4), C, N*sizeof(char));
     memcpy(result + ((4 + N) * sizeof(char)), I, ENTROPY_SIZE*sizeof(char));
@@ -155,10 +156,10 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y,unsigned 
     temp_node = y; 
     while(temp_node != NULL)
     {
-        //printf(" %s \n",stringToHex(temp_node->data,N));
         memcpy(result + len,temp_node->data, N*sizeof(char));
         len = len + (N*sizeof(char));
         temp_node  = temp_node->next;
+        i++;
     }
     temp_node = y; 
     
@@ -247,7 +248,7 @@ char* lmots_sig_to_public_key(char *sig, char* message)
     list_node_t* temp_node = NULL;
     int i = 0;
     unsigned int j = 0; 
-    char temp_string[4] ={0};   
+    char temp_string[5] ={0};   
     decode_lmots_sig(sig,&decoded_sig);
     memcpy(temp_hashQ,message, strlen(message));
     memcpy(temp_hashQ + strlen(message),decoded_sig.C, 32);

@@ -13,7 +13,7 @@ lms_priv_key_t* create_lms_priv_key(void)
 {
     lms_priv_key_t* lms_private_key = (lms_priv_key_t*) malloc(sizeof(lms_priv_key_t));    
     unsigned  int q = 0;
-    char      temp_string[4] = {0};
+    char      temp_string[5] = {0};
     
     entropy_read(lms_private_key->I,31);
     lms_private_key->priv  = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
@@ -42,7 +42,7 @@ char* T(lms_priv_key_t* private_key, unsigned int j)
         list_node_t* lm_ots_pub_key = NULL;
         unsigned int height_index = NUM_LEAF_NODES;
         char temp_input[1024] = {0};
-        char temp_string[4] = {0};
+        char temp_string[5] = {0};
 
         if (j >= height_index)
         {
@@ -90,9 +90,15 @@ char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsig
     char* sig = NULL;
     list_node_t* path = NULL;
     unsigned int len_lm_ots_sig = 0;
-    char temp_string[4] = {0};
+    char temp_string[5] = {0};
     if (lms_private_key->leaf_num >= NUM_LEAF_NODES)
+    {
         return NULL;
+    }
+   printf("DEBUG1: %p %s \n",lms_private_key->priv[lms_private_key->leaf_num].data,
+                          stringToHex(lms_private_key->I,31));
+
+   printf("DEBUG2: %d %s \n",lms_private_key->leaf_num,uint32ToString(lms_private_key->leaf_num,temp_string));
    sig = lmots_generate_signature((list_node_t* )lms_private_key->priv[lms_private_key->leaf_num].data, 
                                     lms_private_key->I,
                                     uint32ToString(lms_private_key->leaf_num,temp_string),
@@ -147,7 +153,7 @@ char* encode_lms_sig(char* sig, unsigned int lm_ots_len, list_node_t* path,unsig
 {
     char* result = (char*) malloc( 2* 1024);
     unsigned int len = 0;
-    char temp_string[4] = {0};    
+    char temp_string[5] = {0};    
     list_node_t*  temp_node = NULL;
     memcpy(result,uint32ToString(LMS_SHA256_N32_H10,temp_string),4*sizeof(char));
     len = 4*sizeof(char);
@@ -228,7 +234,7 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
     unsigned int node_num = 0;
     list_node_t*  temp_node = NULL;        
     char temp_input[1024] = {0};
-    char temp_string[4] = {0};    
+    char temp_string[5] = {0};    
     char temp[1024] = {0};
     decode_lms_sig(sig, &lms_signature,len_sig);
     temp_node = lms_signature.path;
