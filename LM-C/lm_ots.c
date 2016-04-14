@@ -162,17 +162,19 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y,unsigned 
         temp_node  = temp_node->next;
         i++;
     }
-    temp_node = y; 
+    //temp_node = y; 
     
-    while(temp_node != NULL)
-    {
+    //while(temp_node != NULL)
+    //{
         //printf("DATA: %p \n ",temp_node->data);
         //printf("NODE: %p \n ",temp_node);
-        list_node_t*  prev_node = temp_node->next;
-        free(temp_node->data);
-        free(temp_node);
-        temp_node = prev_node;
-    }
+    //    list_node_t*  prev_node = temp_node->next;
+   //     free(temp_node->data);
+    //    free(temp_node);
+    //    temp_node = prev_node;
+    //}
+    //
+    lm_ots_cleanup_keys(y,NULL);
 
     *sign_len = len;
     //printf("signture: %s \n ", stringToHex(result,len));
@@ -241,32 +243,38 @@ unsigned int  lmots_verify_signature(char* public_key,char * sig, char* message)
     char* z = lmots_sig_to_public_key(sig, message);
     
     if(compare(public_key,z,N))
+    {
+        free(z);
         return 1;
+    }
     else
+    {
+        free(z);
         return 0;
+    }
 }
 
 char* lmots_sig_to_public_key(char *sig, char* message)
 {
     lm_ots_sig_t decoded_sig;
-    char* temp_hashQ = (char *) malloc(strlen(message) + 31 + 32 + 4 + 1);
-    char* hashQ = (char *) malloc(33);
-    char* temp_input = (char *) malloc(1024);
+    char temp_input[N + ENTROPY_SIZE + 4 + 2 + 1 + 1] = {0};
+    char* hashQ = (char *) malloc(strlen(message) + N + ENTROPY_SIZE + 4 + 1);
     char* public_key =(char*) malloc(N * sizeof(char));    
     void* hash_handle = hash_create();
     list_node_t* temp_node = NULL;
     int i = 0;
     unsigned int j = 0; 
-    char temp_string[5] ={0};   
+    char temp_string[5] ={0};
+
     decode_lmots_sig(sig,&decoded_sig);
-    memcpy(temp_hashQ,message, strlen(message));
-    memcpy(temp_hashQ + strlen(message),decoded_sig.C, 32);
-    memcpy(temp_hashQ + strlen(message) + 32,decoded_sig.I, 31);
-    memcpy(temp_hashQ + strlen(message) + 63 ,decoded_sig.q, 4);
-    memcpy(temp_hashQ + strlen(message) + 67, uint8ToString(D_MESG,temp_string), 1);    
-    H(temp_hashQ,hashQ,strlen(message) + 68);
-    memcpy(temp_hashQ,hashQ,32);
-    memcpy(temp_hashQ +32, checksum(hashQ,32), 2*sizeof(char));
+    memcpy(hashQ,message, strlen(message));
+    memcpy(hashQ + strlen(message),decoded_sig.C, N);
+    memcpy(hashQ + strlen(message) + N,decoded_sig.I, ENTROPY_SIZE);
+    memcpy(hashQ + strlen(message) + N + ENTROPY_SIZE,decoded_sig.q, 4);
+    memcpy(hashQ + strlen(message) + N + ENTROPY_SIZE + 4, uint8ToString(D_MESG,temp_string), 1);    
+    H(hashQ,hashQ,strlen(message) + N + ENTROPY_SIZE + 4 + 1);
+    //memcpy(hashQ,hashQ,32);
+    memcpy(hashQ + N, checksum(hashQ,N), 2*sizeof(char));
     //printf( "V: %s \n",stringToHex(temp_hashQ,34));
     
     hash_update(hash_handle,decoded_sig.I,31);
@@ -276,20 +284,19 @@ char* lmots_sig_to_public_key(char *sig, char* message)
     while(temp_node != NULL)
     {
         //printf("[%d] %s \n\n ",i,stringToHex(temp_node->data,N));
-        memcpy(temp_input,temp_node->data,32);
-        for (j = (unsigned char)(temp_hashQ[i]); j < 256; j++)
+        memcpy(temp_input,temp_node->data,N);
+        for (j = (unsigned char)(hashQ[i]); j < 256; j++)
         {
-            memcpy(temp_input + N,decoded_sig.I, 31);
-            memcpy(temp_input + N + 31,decoded_sig.q, 4);
-            memcpy(temp_input + N + 35,uint16ToString(i,temp_string), 2);
-            memcpy(temp_input + N + 37,uint8ToString(j,temp_string), 1);
-            memcpy(temp_input + N + 38,uint8ToString(D_ITER,temp_string), 1);
+            memcpy(temp_input + N,decoded_sig.I, ENTROPY_SIZE);
+            memcpy(temp_input + N + ENTROPY_SIZE,decoded_sig.q, 4);
+            memcpy(temp_input + N + ENTROPY_SIZE + 4,uint16ToString(i,temp_string), 2);
+            memcpy(temp_input + N + ENTROPY_SIZE + 4 + 2,uint8ToString(j,temp_string), 1);
+            memcpy(temp_input + N + ENTROPY_SIZE + 4 + 2 + 1,uint8ToString(D_ITER,temp_string), 1);
             //printf(" INPUT[%d] : %s \n ",j,stringToHex(temp_input ,N + 39));
-            H(temp_input,temp_input, N+39);
+            H(temp_input,temp_input, N + ENTROPY_SIZE + 4 + 2 + 1 + 1);
             //printf(" OUTPUT : %s \n ",stringToHex(temp_input,N));
-            //exit(1);
         }
-        hash_update(hash_handle,temp_input,32);
+        hash_update(hash_handle,temp_input,N);
         temp_node = temp_node->next;
         i++;
     }
@@ -299,6 +306,7 @@ char* lmots_sig_to_public_key(char *sig, char* message)
     
     /* Cleanup the keys we created */
     lm_ots_cleanup_keys(decoded_sig.y,NULL);
+    free(hashQ);
     return public_key;
 }
 
@@ -322,6 +330,5 @@ void lm_ots_cleanup_keys(list_node_t*  priv_key, char* pub_key)
     {
         free(pub_key);
     }
-
 }
 

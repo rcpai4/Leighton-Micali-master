@@ -50,3 +50,5 @@ void strip(char *s);
 unsigned int power(unsigned int x, unsigned int y);
 void print_buffer(char* print,unsigned int len);
 unsigned int compare(char* src, char* dst, int len);
+void cleanup_link_list(list_node_t*  root);
+

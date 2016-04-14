@@ -26,8 +26,7 @@ char file_buff[1024];
 
 
 /*TODO: This needs to be a input param */
-unsigned int chosen_has_algo        = SHA_256;
-
+unsigned int chosen_has_algo        = BLAKE_2S;
 void entropy_create(void)
 {
     DEBUG_PRINT;
@@ -293,3 +292,20 @@ unsigned int compare(char* src, char* dst, int len)
     }
     return 1;
 }
+
+void cleanup_link_list(list_node_t*  root)
+{
+    list_node_t*  curr_node = root; 
+    list_node_t*  temp_node = root; 
+
+    while(curr_node != NULL)
+    {
+        temp_node = curr_node->next;
+        if(curr_node->data != NULL)
+            free(curr_node->data);
+        if(curr_node != NULL)
+            free(curr_node);
+        curr_node = temp_node;
+    }
+}
+

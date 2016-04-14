@@ -33,27 +33,28 @@ lms_priv_key_t* create_lms_priv_key(void)
     for(q = 0; q < 2* NUM_LEAF_NODES; q++)
     {
         lms_private_key->nodes[(unsigned int)q].data = (char *)malloc(32 * sizeof(char));
+        lms_private_key->nodes[(unsigned int)q].next = NULL;
     }
-    lms_private_key->leaf_num = 0;
+    lms_private_key->leaf_num       = 0;
     lms_private_key->lms_public_key = T(lms_private_key,1);
     return lms_private_key;
 }
 
 char* T(lms_priv_key_t* private_key, unsigned int j)
 {
-        list_node_t* lm_ots_pub_key = NULL;
-        unsigned int height_index = NUM_LEAF_NODES;
-        char temp_input[1024] = {0};
-        char temp_string[5] = {0};
+        list_node_t*    lm_ots_pub_key      = NULL;
+        unsigned int    height_index        = NUM_LEAF_NODES;
+        char            temp_input[N + N + ENTROPY_SIZE + 4 + 1]    = {0};
+        char            temp_string[5]      = {0};
 
         if (j >= height_index)
         {
             lm_ots_pub_key = (list_node_t*)&(private_key->pub[j - height_index]);
             memcpy(temp_input,lm_ots_pub_key->data,N);
-            memcpy(temp_input + N,private_key->I,31);
-            memcpy(temp_input + N + 31,uint32ToString(j,temp_string),4);
-            memcpy(temp_input + N + 35,uint8ToString(D_LEAF,temp_string),1);
-            H(temp_input,private_key->nodes[j].data,N +36);
+            memcpy(temp_input + N,private_key->I,ENTROPY_SIZE);
+            memcpy(temp_input + N + ENTROPY_SIZE,uint32ToString(j,temp_string),4);
+            memcpy(temp_input + N + ENTROPY_SIZE + 4,uint8ToString(D_LEAF,temp_string),1);
+            H(temp_input,private_key->nodes[j].data,N + ENTROPY_SIZE + 4 + 1);
             //printf("INPUT PUB: %s \n",stringToHex(lm_ots_pub_key->data,N));
             //printf("INPUT I: %s \n",stringToHex(private_key->I,31));
             //printf("INPUT j: %s \n",stringToHex(uint32ToString(j),4));
@@ -64,11 +65,11 @@ char* T(lms_priv_key_t* private_key, unsigned int j)
         else
         {
             memcpy(temp_input, T(private_key,2*j),N*sizeof(char));
-            memcpy(temp_input + N*sizeof(char), T(private_key,2*j + 1),N*sizeof(char));
-            memcpy(temp_input + 2*N*sizeof(char), private_key->I ,31*sizeof(char));
-            memcpy(temp_input + (2*N + 31)*sizeof(char), uint32ToString(j,temp_string),4*sizeof(char));
-            memcpy(temp_input + (2*N + 35)*sizeof(char), uint8ToString(D_INTR,temp_string),1*sizeof(char));
-            H(temp_input,private_key->nodes[j].data,2*N + 36);
+            memcpy(temp_input + N, T(private_key,2*j + 1),N*sizeof(char));
+            memcpy(temp_input + N + N , private_key->I ,31*sizeof(char));
+            memcpy(temp_input + N + N + ENTROPY_SIZE, uint32ToString(j,temp_string),4*sizeof(char));
+            memcpy(temp_input + N + N + ENTROPY_SIZE + 4, uint8ToString(D_INTR,temp_string),sizeof(char));
+            H(temp_input,private_key->nodes[j].data,N + N + ENTROPY_SIZE + 4 + 1);
             //printf("INPUT T(%d): %s \n",2*j,stringToHex(temp_input,N));
             //printf("INPUT T(%d): %s \n",2*j + 1,stringToHex(temp_input +N,N));
             //printf("INPUT I: %s \n",stringToHex(private_key->I,31));
@@ -97,10 +98,7 @@ char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsig
     {
         return NULL;
     }
-   printf("DEBUG1: %p %s \n",lms_private_key->priv[lms_private_key->leaf_num].data,
-                          stringToHex(lms_private_key->I,31));
 
-   printf("DEBUG2: %d %s \n",lms_private_key->leaf_num,uint32ToString(lms_private_key->leaf_num,temp_string));
    sig = lmots_generate_signature((list_node_t* )lms_private_key->priv[lms_private_key->leaf_num].data, 
                                     lms_private_key->I,
                                     uint32ToString(lms_private_key->leaf_num,temp_string),
@@ -110,6 +108,7 @@ char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsig
     path = get_path(lms_private_key,lms_private_key->leaf_num);
     //leaf_num = self.leaf_num
     lms_private_key->leaf_num = lms_private_key->leaf_num + 1;
+    /* Make sure path and sig is always heap allocated */
     return encode_lms_sig(sig,len_lm_ots_sig, path,sign_len);
 }
 
@@ -154,16 +153,17 @@ list_node_t* get_path(lms_priv_key_t* lms_private_key, unsigned int leaf_num)
 
 char* encode_lms_sig(char* sig, unsigned int lm_ots_len, list_node_t* path,unsigned int* lms_len)
 {
-    char* result = (char*) malloc( 2* 1024);
+    char* result = (char*) malloc(4 + lm_ots_len + HEIGHT*N);
     unsigned int len = 0;
     char temp_string[5] = {0};    
     list_node_t*  temp_node = NULL;
+    
+
     memcpy(result,uint32ToString(LMS_SHA256_N32_H10,temp_string),4*sizeof(char));
     len = 4*sizeof(char);
     memcpy(result +len,sig,lm_ots_len);
     len = len + lm_ots_len;
     temp_node = path;
-    
     while(temp_node != NULL)
     {
         //printf(" %s \n",stringToHex(temp_node->data,N));
@@ -172,7 +172,9 @@ char* encode_lms_sig(char* sig, unsigned int lm_ots_len, list_node_t* path,unsig
         temp_node  = temp_node->next;
     }
     *lms_len = len;
-
+    /* Make sure path and sig is always heap allocated */
+    cleanup_link_list(path);
+    free(sig);
     //printf("SIG: %s \n",stringToHex(result,len));
     
     return result;
@@ -197,7 +199,7 @@ void decode_lms_sig(char* sig,lms_sig_t* lms_signature,unsigned int len_sig)
     {
         //print "sig[" + str(i) + "]:\t" + stringToHex(sig[pos:pos+n])
         temp_node = (list_node_t*)malloc(sizeof(list_node_t));
-        temp_node->data =(char* ) malloc(32 *sizeof(char));
+        temp_node->data =(char* ) malloc(N *sizeof(char));
         temp_node->next = NULL;
         memcpy(temp_node->data, sig + pos, N);
         pos = pos + N;
@@ -218,7 +220,8 @@ void print_lms_sig(char* sig, unsigned int len_sig)
 {
     unsigned int i = 0;
     lms_sig_t lms_signature;
-    list_node_t*  temp_node = NULL;    
+    list_node_t*  temp_node = NULL;
+    list_node_t*  delete_node = NULL;    
     decode_lms_sig(sig, &lms_signature,len_sig);
     print_lmots_signature(lms_signature.lm_ots_sig);
     temp_node = lms_signature.path; 
@@ -226,32 +229,38 @@ void print_lms_sig(char* sig, unsigned int len_sig)
     while(temp_node != NULL)
     {
         printf("path[%d]: \t %s \n ",i,stringToHex(temp_node->data,N));
+        delete_node = temp_node;
         temp_node = temp_node->next;
+        /*Lets destroy this from the face of the earth*/
+        free(delete_node->data);
+        free(delete_node);
         i++;
     }
 }
 
 unsigned int lms_verify_signature(char* sig, char* public_key, char* message, unsigned int len_sig)
 {
-    lms_sig_t lms_signature;
-    lm_ots_sig_t decoded_sig;    
-    unsigned int node_num = 0;
-    list_node_t*  temp_node = NULL;        
-    char temp_input[1024] = {0};
-    char temp_string[5] = {0};    
-    char temp[1024] = {0};
+    lms_sig_t       lms_signature;
+    lm_ots_sig_t    decoded_sig;    
+    unsigned int    node_num            = 0;
+    list_node_t*    temp_node           = NULL;        
+    char            temp_input[N + ENTROPY_SIZE + 4 + 1]    = {0};
+    char            temp_string[5]      = {0};    
+    char            temp[N + N + ENTROPY_SIZE + 4 + 1]          = {0};
+    char*           lm_ots_sig          = NULL;
+
     decode_lms_sig(sig, &lms_signature,len_sig);
     temp_node = lms_signature.path;
     decode_lmots_sig(lms_signature.lm_ots_sig,&decoded_sig);// note: only q is actually needed here
     node_num = stringToUint((unsigned char*)decoded_sig.q,4) + NUM_LEAF_NODES;
     
-    char* tmp = lmots_sig_to_public_key(lms_signature.lm_ots_sig, message);
-    memcpy(temp_input,tmp,N*sizeof(char));
-    memcpy(temp_input + N*sizeof(char),decoded_sig.I,31*sizeof(char));
-    memcpy(temp_input + (N + 31)*sizeof(char),uint32ToString(node_num,temp_string),4*sizeof(char));
-    memcpy(temp_input + (N + 35)*sizeof(char),uint8ToString(D_LEAF,temp_string),1);
+    lm_ots_sig = lmots_sig_to_public_key(lms_signature.lm_ots_sig, message);
+    memcpy(temp_input,lm_ots_sig,N*sizeof(char));
+    memcpy(temp_input + N,decoded_sig.I,ENTROPY_SIZE*sizeof(char));
+    memcpy(temp_input + (N + ENTROPY_SIZE),uint32ToString(node_num,temp_string),4*sizeof(char));
+    memcpy(temp_input + (N + ENTROPY_SIZE + 4)*sizeof(char),uint8ToString(D_LEAF,temp_string),1);
 
-    H(temp_input,temp_input,N+36);
+    H(temp_input,temp_input,N + ENTROPY_SIZE + 4 + 1);
     memcpy(temp,temp_input,N);
     while(node_num > 1)
     {
@@ -263,27 +272,31 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
             //print "adding node " + str(node_num - 1)
             memcpy(temp,temp_node->data,N*sizeof(char));
             memcpy(temp + N ,temp_input,N*sizeof(char));
-            memcpy(temp + 2*N,decoded_sig.I,31*sizeof(char));
-            memcpy(temp +2*N + 31,uint32ToString(node_num/2,temp_string),4*sizeof(char));
-            memcpy(temp +2*N + 35,uint8ToString(D_INTR,temp_string),1);
+            memcpy(temp + N + N,decoded_sig.I,ENTROPY_SIZE*sizeof(char));
+            memcpy(temp + N + N + ENTROPY_SIZE,uint32ToString(node_num/2,temp_string),4*sizeof(char));
+            memcpy(temp + N + N + ENTROPY_SIZE + 4 ,uint8ToString(D_INTR,temp_string),1);
             //printf("INPUT: %s \n ",stringToHex(temp, 2*N +36));
-            H(temp,temp_input, 2*N +36);
+            H(temp,temp_input, N + N + ENTROPY_SIZE + 4 + 1);
         }
         else
         {
             // print "adding node " + str(node_num + 1)
             memcpy(temp + N ,temp_node->data,N*sizeof(char));
-            memcpy(temp + 2*N,decoded_sig.I,31*sizeof(char));
-            memcpy(temp +2*N + 31,uint32ToString(node_num/2,temp_string),4*sizeof(char));
-            memcpy(temp +2*N + 35,uint8ToString(D_INTR,temp_string),1);
+            memcpy(temp + N + N,decoded_sig.I,ENTROPY_SIZE*sizeof(char));
+            memcpy(temp + N + N + ENTROPY_SIZE,uint32ToString(node_num/2,temp_string),4*sizeof(char));
+            memcpy(temp + N + N + ENTROPY_SIZE + 4,uint8ToString(D_INTR,temp_string),1);
             //printf("INPUT: %s \n ",stringToHex(temp, 2*N +36));
-            H(temp,temp_input, 2*N +36);
+            H(temp,temp_input, N + N + ENTROPY_SIZE + 4 + 1);
         }
         memcpy(temp,temp_input,N);
         node_num = node_num/2;
         temp_node = temp_node->next;
     }
-    
+    /* Clean up the allocated data */
+    free(lm_ots_sig);
+    free(lms_signature.lm_ots_sig);
+    cleanup_link_list(lms_signature.path);
+    cleanup_link_list(decoded_sig.y);
     //print "pubkey: " + stringToHex(tmp)
     if (compare(temp,public_key,N))
     {
@@ -293,4 +306,25 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
     {
         return 0;
      }
+}
+
+void cleanup_lms_key(lms_priv_key_t* lms_private_key,char* lms_public_key)
+{
+    unsigned int q = 0;
+
+    for(q = 0; q < NUM_LEAF_NODES; q++)
+    {
+        cleanup_link_list(lms_private_key->priv[(unsigned int)q].data);
+        free(lms_private_key->pub[(unsigned int)q].data);
+    }
+    
+    lms_private_key->nodes  = (list_node_t *) malloc( 2* NUM_LEAF_NODES *sizeof(list_node_t));
+    for(q = 0; q < 2* NUM_LEAF_NODES; q++)
+    {
+        free(lms_private_key->nodes[(unsigned int)q].data);
+    }
+    free(lms_private_key->nodes);
+    free(lms_private_key->priv);
+    free(lms_private_key->pub);
+    free(lms_public_key);
 }

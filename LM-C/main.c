@@ -123,6 +123,8 @@ int lms_test_case(void)
             printf("Passed: LMS message/signature pair is invalid as expected \n ");
         }
     }
+    free(message);
+    cleanup_lms_key(lms_private_key,lms_public_key);
     return 1; 
 }
 
