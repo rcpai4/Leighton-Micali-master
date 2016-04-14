@@ -233,7 +233,7 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
     decode_lms_sig(sig, &lms_signature,len_sig);
     temp_node = lms_signature.path;
     decode_lmots_sig(lms_signature.lm_ots_sig,&decoded_sig);// note: only q is actually needed here
-    node_num = stringToUint(decoded_sig.q,4) + NUM_LEAF_NODES;
+    node_num = stringToUint((unsigned char*)decoded_sig.q,4) + NUM_LEAF_NODES;
     
     char* tmp = lmots_sig_to_public_key(lms_signature.lm_ots_sig, message);
     memcpy(temp_input,tmp,N*sizeof(char));

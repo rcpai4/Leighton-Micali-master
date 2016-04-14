@@ -93,7 +93,7 @@ char* uint8ToString(unsigned char x,char* c1)
     return c1;
 }
 
-unsigned int stringToUint(char* x,unsigned int len)
+unsigned int stringToUint(unsigned char* x,unsigned int len)
 {
     unsigned int sum = 0;
     unsigned int i = 0;
