@@ -68,6 +68,7 @@ int lm_ots_test_case(void)
     }
 
     lm_ots_cleanup_keys(lm_ots_private_key,lm_ots_public_key);
+    free(lm_ots_signature);
     free(message);
     return 1;
 }
@@ -103,7 +104,7 @@ int lms_test_case(void)
         printf("SIGNATURE %d \n",i);
         sig  = lms_generate_signature(lms_private_key,message,(unsigned int)strlen(message));
         //printf("SIGNATURE %s \n",stringToHex(sig,sign_len));
-        print_lms_sig(sig);
+        //print_lms_sig(sig);
         printf("True positive test \n");
         if (lms_verify_signature(sig,lms_public_key,message,message_len) == 1)
         {
@@ -125,9 +126,13 @@ int lms_test_case(void)
         {
             printf("Passed: LMS message/signature pair is invalid as expected \n ");
         }
+        
+        /*Free the generated signature */
+        free(sig);
     }
+    /*Free the Rest of the memory */
     free(message);
-    //cleanup_lms_key(lms_private_key,lms_public_key);
+    cleanup_lms_key(lms_private_key,NULL);
     return 1; 
 }
 
@@ -156,10 +161,7 @@ int hlms_test_case(void)
     for(i = 0; i< 4096; i++)
     {
         sig  = hlms_generate_signature(hlms_private_key,message,message_len);
-
-        print_hlms_sig(sig);
-        //exit(1);
-
+        //print_hlms_sig(sig);
         printf("Testing verification (%dth iteration)\n",i);
         printf("True positive test\n");
         if (hlms_verify_signature(sig,hlms_public_key,message,message_len) == 1)
@@ -182,9 +184,10 @@ int hlms_test_case(void)
         {
             printf("Passed; HLMS message/signature pair is invalid as expected \n");
         }
-
-        //exit(1);
+        free(sig);
     }
+    
+    cleanup_hlms_keys(hlms_private_key);
 
     return 1;
 }

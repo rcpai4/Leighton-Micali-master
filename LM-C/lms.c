@@ -320,14 +320,11 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
 void cleanup_lms_key(lms_priv_key_t* lms_private_key,char* lms_public_key)
 {
     unsigned int q = 0;
-
     for(q = 0; q < NUM_LEAF_NODES; q++)
     {
         cleanup_link_list((list_node_t *)lms_private_key->priv[(unsigned int)q].data);
         free(lms_private_key->pub[(unsigned int)q].data);
     }
-    
-    lms_private_key->nodes  = (list_node_t *) malloc( 2* NUM_LEAF_NODES *sizeof(list_node_t));
     for(q = 0; q < 2* NUM_LEAF_NODES; q++)
     {
         free(lms_private_key->nodes[(unsigned int)q].data);
@@ -335,7 +332,8 @@ void cleanup_lms_key(lms_priv_key_t* lms_private_key,char* lms_public_key)
     free(lms_private_key->nodes);
     free(lms_private_key->priv);
     free(lms_private_key->pub);
-    free(lms_public_key);
+    if(lms_public_key)
+        free(lms_public_key);
 }
 
 unsigned int bytes_in_lms_sig(void)

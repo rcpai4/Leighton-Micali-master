@@ -37,5 +37,6 @@ void decode_hlms_sig(char* sig,hlms_sig_t* hlms_signature);
 
 unsigned int hlms_verify_signature(char* sig, char* public_key, char* message,unsigned int mes_len);
 
+void cleanup_hlms_keys(hlms_priv_key_t* hlms_private_key);
 
 
