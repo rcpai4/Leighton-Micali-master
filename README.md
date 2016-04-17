@@ -23,6 +23,15 @@ To run LMS test case run:
 
 ./main_lm -lms
 
+To run HLMS test case run:
+
+./main_lm -hlms
+
+To run All test case run:
+
+./main  -lmots -lms -hlms
+
+
 To change the Hashing algorithm, goto to file commons.c. There is a global
 variable called chosen_has_algo. Change it to SHA_256 or BLAKE_2B or BLAKE_2S
 for respective hashing algorithm.
