@@ -7,6 +7,9 @@
 #define     MSG_SIZE        1024
 #define     N               32
 
+#define LMS_SHA256_N32_H10 0x02000002
+#define HLMS_SHA256_N32_L2 0x01000001 
+
 /* We choose hash algorithm based on this pre processor 
  * 1 - SHA-256 
  * 2 - BLAKE 2B

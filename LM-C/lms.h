@@ -1,7 +1,6 @@
 
 #define HEIGHT 10
 
-#define LMS_SHA256_N32_H10 0x02000002
 
 unsigned int NUM_LEAF_NODES;
 
@@ -32,17 +31,19 @@ char* T(lms_priv_key_t* private_key, unsigned int j);
 
 char* get_public_key(lms_priv_key_t* private_key);
 
-char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsigned int* sign_len);
+char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsigned int mes_len);
 
 list_node_t* get_path(lms_priv_key_t* lms_private_key, unsigned int leaf_num);
 
-char* encode_lms_sig(char* sig, unsigned int lm_ots_len, list_node_t* path,unsigned int* lms_len);
+char* encode_lms_sig(char* sig, list_node_t* path);
 
-void print_lms_sig(char* sig,unsigned int len);
+void print_lms_sig(char* sig);
 
-void decode_lms_sig(char* sig,lms_sig_t* lms_signature,unsigned int len_sig);
+void decode_lms_sig(char* sig,lms_sig_t* lms_signature);
 
 unsigned int lms_verify_signature(char* sig, char* public_key, char* message, unsigned int len_sig);
 
 void cleanup_lms_key(lms_priv_key_t* lms_private_key,char* lms_public_key);
+
+unsigned int bytes_in_lms_sig(void);
 

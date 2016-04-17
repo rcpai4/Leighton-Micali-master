@@ -26,13 +26,13 @@ char file_buff[1024];
 
 
 /*TODO: This needs to be a input param */
-unsigned int chosen_has_algo        = BLAKE_2S;
+unsigned int chosen_has_algo        = SHA_256;
 void entropy_create(void)
 {
     DEBUG_PRINT;
     srand(time(0));
 #if FILE_READ
-    fp_file = fopen("inputfile_lms","r");
+    fp_file = fopen("inputfile_hlms","r");
 #else
     fp_file = fopen("/dev/urandom", "r");
 #endif

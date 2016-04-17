@@ -24,20 +24,21 @@ list_node_t* generate_private_key(void);
 
 char* generate_public_key(list_node_t* private_key, char* I, char* q);
 
-char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y,unsigned int* sign_len);
+char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y);
 
 
-char* checksum(char *x, unsigned int len);
+char* checksum(unsigned char *x, unsigned int len);
 
 void print_lmots_signature(char* lmots_signature);
 void decode_lmots_sig(char *sig, lm_ots_sig_t* decoded_sig);
 unsigned int bytes_in_lmots_sig(void);
 
-char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q, char* message,unsigned int * len);
-unsigned int  lmots_verify_signature(char*  public_key,char * sig, char* message);
-char* lmots_sig_to_public_key(char *sig, char* message);
+char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q, char* message,unsigned int len);
+unsigned int  lmots_verify_signature(char*  public_key,char * sig, char* message,unsigned int mes_len);
+char* lmots_sig_to_public_key(char *sig, char* message,unsigned int mes_len);
 
 void lm_ots_cleanup_keys(list_node_t*  priv_key, char* pub_key);
 
+void print_link_list(list_node_t* root,unsigned  int len);
 
 

@@ -14,12 +14,13 @@ lms_priv_key_t* create_lms_priv_key(void)
     lms_priv_key_t* lms_private_key = (lms_priv_key_t*) malloc(sizeof(lms_priv_key_t));    
     unsigned  int q = 0;
     char      temp_string[5] = {0};
-    
     entropy_read(lms_private_key->I,31);
+    //printf("I: %s\n",stringToHex(lms_private_key->I,31));
     lms_private_key->priv  = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
     lms_private_key->pub   = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
     for(q = 0; q < NUM_LEAF_NODES; q++)
     {
+        //printf("I: %s q: %s \n ",lms_private_key->I,uint32ToString(q,temp_string));
         lms_private_key->priv[(unsigned int)q].data = (void *)generate_private_key();
         lms_private_key->pub[(unsigned int)q].data  = (void *)generate_public_key(
                                                         (list_node_t* )lms_private_key->priv[(unsigned int)q].data,\
@@ -27,6 +28,7 @@ lms_priv_key_t* create_lms_priv_key(void)
         lms_private_key->priv[(unsigned int)q].next = NULL;
         lms_private_key->pub[(unsigned int)q].next  = NULL;    
         printf(" Generating %u th OTS key PUBLIC KEY %s \n",q,stringToHex(lms_private_key->pub[(unsigned int)q].data,N));
+        //exit(1);
     }
     
     lms_private_key->nodes  = (list_node_t *) malloc( 2* NUM_LEAF_NODES *sizeof(list_node_t));
@@ -88,28 +90,33 @@ char* get_public_key(lms_priv_key_t* private_key)
     return private_key->lms_public_key;
 }
 
-char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsigned int* sign_len)
+char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsigned int mes_len)
 {
     char* sig = NULL;
     list_node_t* path = NULL;
-    unsigned int len_lm_ots_sig = 0;
     char temp_string[5] = {0};
     if (lms_private_key->leaf_num >= NUM_LEAF_NODES)
     {
         return NULL;
     }
 
-   sig = lmots_generate_signature((list_node_t* )lms_private_key->priv[lms_private_key->leaf_num].data, 
+    //printf("LMOTS SIG INP \n ");
+    //printf("LMOTS PRIV KEY \n ");
+    //print_link_list((list_node_t* )lms_private_key->priv[lms_private_key->leaf_num].data,N);
+    //printf(" I: %s  \n ",stringToHex(lms_private_key->I,31));
+    //printf("LEAF %d \n ",lms_private_key->leaf_num);
+    sig = lmots_generate_signature((list_node_t* )lms_private_key->priv[lms_private_key->leaf_num].data, 
                                     lms_private_key->I,
                                     uint32ToString(lms_private_key->leaf_num,temp_string),
                                     message,
-                                    &len_lm_ots_sig);
-    // C, I, q, y = decode_lmots_sig(sig)
+                                    mes_len);
+   //print_lmots_signature(sig); 
+   // C, I, q, y = decode_lmots_sig(sig)
     path = get_path(lms_private_key,lms_private_key->leaf_num);
     //leaf_num = self.leaf_num
     lms_private_key->leaf_num = lms_private_key->leaf_num + 1;
     /* Make sure path and sig is always heap allocated */
-    return encode_lms_sig(sig,len_lm_ots_sig, path,sign_len);
+    return encode_lms_sig(sig,path);
 }
 
 list_node_t* get_path(lms_priv_key_t* lms_private_key, unsigned int leaf_num)
@@ -148,11 +155,13 @@ list_node_t* get_path(lms_priv_key_t* lms_private_key, unsigned int leaf_num)
         curr_node->next = temp_node;
         curr_node = temp_node;
     }
+
     return root_node;
 }
 
-char* encode_lms_sig(char* sig, unsigned int lm_ots_len, list_node_t* path,unsigned int* lms_len)
+char* encode_lms_sig(char* sig, list_node_t* path)
 {
+    unsigned int lm_ots_len = bytes_in_lmots_sig();
     char* result = (char*) malloc(4 + lm_ots_len + HEIGHT*N);
     unsigned int len = 0;
     char temp_string[5] = {0};    
@@ -171,7 +180,6 @@ char* encode_lms_sig(char* sig, unsigned int lm_ots_len, list_node_t* path,unsig
         len = len + (N*sizeof(char));
         temp_node  = temp_node->next;
     }
-    *lms_len = len;
     /* Make sure path and sig is always heap allocated */
     cleanup_link_list(path);
     free(sig);
@@ -180,7 +188,7 @@ char* encode_lms_sig(char* sig, unsigned int lm_ots_len, list_node_t* path,unsig
     return result;
 }
 
-void decode_lms_sig(char* sig,lms_sig_t* lms_signature,unsigned int len_sig)
+void decode_lms_sig(char* sig,lms_sig_t* lms_signature)
 {
     list_node_t*  temp_node = NULL;
     list_node_t*  curr_node = NULL;
@@ -216,13 +224,13 @@ void decode_lms_sig(char* sig,lms_sig_t* lms_signature,unsigned int len_sig)
 
 }
 
-void print_lms_sig(char* sig, unsigned int len_sig)
+void print_lms_sig(char* sig)
 {
     unsigned int i = 0;
     lms_sig_t lms_signature;
     list_node_t*  temp_node = NULL;
     list_node_t*  delete_node = NULL;    
-    decode_lms_sig(sig, &lms_signature,len_sig);
+    decode_lms_sig(sig, &lms_signature);
     print_lmots_signature(lms_signature.lm_ots_sig);
     temp_node = lms_signature.path; 
     
@@ -238,7 +246,7 @@ void print_lms_sig(char* sig, unsigned int len_sig)
     }
 }
 
-unsigned int lms_verify_signature(char* sig, char* public_key, char* message, unsigned int len_sig)
+unsigned int lms_verify_signature(char* sig, char* public_key, char* message, unsigned int mes_len)
 {
     lms_sig_t       lms_signature;
     lm_ots_sig_t    decoded_sig;    
@@ -249,12 +257,12 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
     char            temp[N + N + ENTROPY_SIZE + 4 + 1]          = {0};
     char*           lm_ots_sig          = NULL;
 
-    decode_lms_sig(sig, &lms_signature,len_sig);
+    decode_lms_sig(sig, &lms_signature);
     temp_node = lms_signature.path;
     decode_lmots_sig(lms_signature.lm_ots_sig,&decoded_sig);// note: only q is actually needed here
     node_num = stringToUint((unsigned char*)decoded_sig.q,4) + NUM_LEAF_NODES;
     
-    lm_ots_sig = lmots_sig_to_public_key(lms_signature.lm_ots_sig, message);
+    lm_ots_sig = lmots_sig_to_public_key(lms_signature.lm_ots_sig, message,mes_len);
     memcpy(temp_input,lm_ots_sig,N*sizeof(char));
     memcpy(temp_input + N,decoded_sig.I,ENTROPY_SIZE*sizeof(char));
     memcpy(temp_input + (N + ENTROPY_SIZE),uint32ToString(node_num,temp_string),4*sizeof(char));
@@ -297,7 +305,8 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
     free(lms_signature.lm_ots_sig);
     cleanup_link_list(lms_signature.path);
     cleanup_link_list(decoded_sig.y);
-    //print "pubkey: " + stringToHex(tmp)
+    printf("GEN PUB: %s \n",stringToHex(temp,N));
+    printf("PUB: %s \n",stringToHex(public_key,N));       
     if (compare(temp,public_key,N))
     {
         return 1;
@@ -314,7 +323,7 @@ void cleanup_lms_key(lms_priv_key_t* lms_private_key,char* lms_public_key)
 
     for(q = 0; q < NUM_LEAF_NODES; q++)
     {
-        cleanup_link_list(lms_private_key->priv[(unsigned int)q].data);
+        cleanup_link_list((list_node_t *)lms_private_key->priv[(unsigned int)q].data);
         free(lms_private_key->pub[(unsigned int)q].data);
     }
     
@@ -327,4 +336,9 @@ void cleanup_lms_key(lms_priv_key_t* lms_private_key,char* lms_public_key)
     free(lms_private_key->priv);
     free(lms_private_key->pub);
     free(lms_public_key);
+}
+
+unsigned int bytes_in_lms_sig(void)
+{
+    return 4 + bytes_in_lmots_sig() + HEIGHT*N;// # 4 + LEN_OF_LMOTS + PATH ENCODE BYTES
 }
