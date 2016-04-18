@@ -19,6 +19,12 @@
 #define     BLAKE_2B                        2
 #define     BLAKE_2S                        4
 
+
+#ifdef DEBUG
+#define D(x) x
+#else
+#define D(x) 
+#endif
 typedef struct list_node list_node_t;
 
 struct list_node

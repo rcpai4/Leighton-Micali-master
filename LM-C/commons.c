@@ -29,7 +29,6 @@ char file_buff[1024];
 unsigned int chosen_has_algo        = SHA_256;
 void entropy_create(void)
 {
-    DEBUG_PRINT;
     srand(time(0));
 #if FILE_READ
     fp_file = fopen("inputfile_hlms","r");
@@ -122,7 +121,7 @@ char* stringToHex(char* x, unsigned int len)
 
 void* hash_create(void)
 {
-    void* hash_ctx = NULL; 
+    void* hash_ctx = NULL;
     if(chosen_has_algo == SHA_256)
     {
         hash_ctx = (SHA256_CTX*)malloc(sizeof(SHA256_CTX));

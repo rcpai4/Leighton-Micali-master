@@ -27,7 +27,7 @@ lms_priv_key_t* create_lms_priv_key(void)
                                                         lms_private_key->I, uint32ToString(q,temp_string));
         lms_private_key->priv[(unsigned int)q].next = NULL;
         lms_private_key->pub[(unsigned int)q].next  = NULL;    
-        printf(" Generating %u th OTS key PUBLIC KEY %s \n",q,stringToHex(lms_private_key->pub[(unsigned int)q].data,N));
+        D(printf(" Generating %u th OTS key PUBLIC KEY %s \n",q,stringToHex(lms_private_key->pub[(unsigned int)q].data,N));)
         //exit(1);
     }
     
@@ -305,8 +305,8 @@ unsigned int lms_verify_signature(char* sig, char* public_key, char* message, un
     free(lms_signature.lm_ots_sig);
     cleanup_link_list(lms_signature.path);
     cleanup_link_list(decoded_sig.y);
-    printf("GEN PUB: %s \n",stringToHex(temp,N));
-    printf("PUB: %s \n",stringToHex(public_key,N));       
+    D(printf("GEN PUB: %s \n",stringToHex(temp,N));)
+    D(printf("PUB: %s \n",stringToHex(public_key,N));)       
     if (compare(temp,public_key,N))
     {
         return 1;

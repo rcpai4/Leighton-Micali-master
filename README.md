@@ -31,6 +31,21 @@ To run All test case run:
 
 ./main  -lmots -lms -hlms
 
+To use specify the number of signatures :
+
+./main  -numsig 250 
+
+To choose SHA-256 as your hash you can use options:
+
+./main  -sha256 
+
+To choose BLAKE2B as your hash you can use options:
+
+./main  -blake2b
+
+To choose BLAKE2S as your hash you can use options:
+
+./main  -blake2s 
 
 To change the Hashing algorithm, goto to file commons.c. There is a global
 variable called chosen_has_algo. Change it to SHA_256 or BLAKE_2B or BLAKE_2S

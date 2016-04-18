@@ -8,6 +8,8 @@
 #include "hlms.h"
 
 
+extern unsigned int chosen_has_algo;
+
 int lms_test_case(unsigned int numsig);
 int lm_ots_test_case(unsigned int numsig);
 int hlms_test_case(unsigned int numsig);
@@ -22,7 +24,7 @@ int lm_ots_test_case(unsigned int numsig)
     char            q[5]                = {0};
     char*           message             = (char* )malloc(MSG_SIZE * sizeof(char));
     unsigned int    i                   = 0, idx = 0;
-    printf(" LM-OTS TEST CASE \n ");    
+    D(printf(" LM-OTS TEST CASE \n ");)    
     /* Create Random number Generator */
     entropy_create();
     for(idx = 0; idx < numsig;idx++)
@@ -35,25 +37,25 @@ int lm_ots_test_case(unsigned int numsig)
         temp_node           = lm_ots_private_key; 
         while(temp_node != NULL)
         {
-            printf("PRIV KEY[%d]: %s \n",i,stringToHex(temp_node->data,N));
+            D(printf("PRIV KEY[%d]: %s \n",i,stringToHex(temp_node->data,N));)
             temp_node = temp_node->next;
             i++;
         }
     
         /* Generate Public Key */
         lm_ots_public_key = generate_public_key(lm_ots_private_key, I,q);
-        printf("\n PUB KEY : %s \n",stringToHex(lm_ots_public_key,N));
+        D(printf("\n PUB KEY : %s \n",stringToHex(lm_ots_public_key,N));)
         strcpy(message,"The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized.");
-        printf("message: %s\n", message);
+        D(printf("message: %s\n", message);)
     
         /* Generate Signature  */
         lm_ots_signature = lmots_generate_signature(lm_ots_private_key, I, q, message,(unsigned int)strlen(message));
         print_lmots_signature(lm_ots_signature);
-        printf("Verification: \n");
-        printf( "True positive test: \n");
+        D(printf("Verification: \n");)
+        D(printf( "True positive test: \n");)
         if(lmots_verify_signature(lm_ots_public_key,lm_ots_signature,message,strlen(message)))
         {
-            printf("Passed: message/signature pair is valid as expected \n");
+            D(printf("Passed: message/signature pair is valid as expected \n");)
         }
         else
         {
@@ -67,7 +69,7 @@ int lm_ots_test_case(unsigned int numsig)
         }
         else
         {
-            printf("Passed: message/signature pair is invalid as expected \n");
+            D(printf("Passed: message/signature pair is invalid as expected \n");)
         }
 
         lm_ots_cleanup_keys(lm_ots_private_key,lm_ots_public_key);
@@ -86,10 +88,10 @@ int lms_test_case(unsigned int numsig)
     unsigned int    i                   = 0;
     unsigned int    message_len         = 0;    
         
-    printf("\n  LMS TEST CASE \n ");    
+    D(printf("\n  LMS TEST CASE \n ");)    
     NUM_LEAF_NODES = power(2,HEIGHT);    
    strcpy(message,"The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized.");
-    printf("message: %s\n", message);    
+    D(printf("message: %s\n", message);)    
 
     /* Create Random number Generator */    
     entropy_create();
@@ -99,13 +101,13 @@ int lms_test_case(unsigned int numsig)
     
     /* Generate Public Key */
     lms_public_key = get_public_key(lms_private_key);
-    printf(" LMS PUBLIC KEY: %s \n",stringToHex(lms_public_key,N));
+    D(printf(" LMS PUBLIC KEY: %s \n",stringToHex(lms_public_key,N));)
     message_len = (unsigned int)strlen(message);
     
     /* Generate Signature */    
     for(i = 0; i < numsig ; i++)
     {
-        printf("SIGNATURE %d \n",i);
+        D(printf("SIGNATURE %d \n",i);)
         sig  = lms_generate_signature(lms_private_key,message,(unsigned int)strlen(message));
         if(sig == NULL)
         {
@@ -120,10 +122,10 @@ int lms_test_case(unsigned int numsig)
         }
         //printf("SIGNATURE %s \n",stringToHex(sig,sign_len));
         //print_lms_sig(sig);
-        printf("True positive test \n");
+        D(printf("True positive test \n");)
         if (lms_verify_signature(sig,lms_public_key,message,message_len) == 1)
         {
-            printf("Passed: LMS message/signature pair is valid \n ");
+            D(printf("Passed: LMS message/signature pair is valid \n ");)
         }
         else
         {
@@ -131,7 +133,7 @@ int lms_test_case(unsigned int numsig)
             exit(1);
         }
     
-        printf("False positive test \n ");
+        D(printf("False positive test \n ");)
         if (lms_verify_signature(sig,lms_public_key,"other message",strlen("other message")) == 1)
         {
             printf("Failed: LMS message/signature pair is valid (expected failure) \n ");
@@ -139,7 +141,7 @@ int lms_test_case(unsigned int numsig)
         }
         else
         {
-            printf("Passed: LMS message/signature pair is invalid as expected \n ");
+            D(printf("Passed: LMS message/signature pair is invalid as expected \n ");)
         }
         
         /*Free the generated signature */
@@ -161,7 +163,7 @@ int hlms_test_case(unsigned int numsig)
     unsigned int     i                    = 0;         
     NUM_LEAF_NODES = power(2,HEIGHT);    
     strcpy(message,"The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no warrants shall issue, but upon probable cause, supported by oath or affirmation, and particularly describing the place to be searched, and the persons or things to be seized.");
-    printf("message: %s\n", message);    
+    D(printf("message: %s\n", message);)    
 
     /* Create Random number Generator */    
     entropy_create();
@@ -187,11 +189,11 @@ int hlms_test_case(unsigned int numsig)
             sig  = hlms_generate_signature(hlms_private_key,message,message_len);
         }
         //print_hlms_sig(sig);
-        printf("Testing verification (%dth iteration)\n",i);
-        printf("True positive test\n");
+        D(printf("Testing verification (%dth iteration)\n",i);)
+        D(printf("True positive test\n");)
         if (hlms_verify_signature(sig,hlms_public_key,message,message_len) == 1)
         {
-            printf("Passed; HLMS message/signature pair is valid\n");
+            D(printf("Passed; HLMS message/signature pair is valid\n");)
         }
         else
         {
@@ -199,7 +201,7 @@ int hlms_test_case(unsigned int numsig)
             exit(1);
         }
 
-        printf("false positive test\n");
+        D(printf("false positive test\n");)
         if (hlms_verify_signature(sig,hlms_public_key,"other message",strlen("other message")) == 1)
         {
             printf("Failed; HLMS message/signature pair is valid (expected failure) \n ");
@@ -207,7 +209,7 @@ int hlms_test_case(unsigned int numsig)
         }
         else
         {
-            printf("Passed; HLMS message/signature pair is invalid as expected \n");
+            D(printf("Passed; HLMS message/signature pair is invalid as expected \n");)
         }
         free(sig);
     }
@@ -217,7 +219,7 @@ int hlms_test_case(unsigned int numsig)
     return 1;
 }
 void usage(char *prog, char *msg) {
-	fprintf(stderr, "%s\nUsage:\t%s [options] \nOptions:\n\t-lmots\t\tRUN LMOTS TEST CASE\n\t-lms\t\tGenerate LMS Testcase\n\t-numsig NUM\tTo specify number of the signatures\n", msg, prog);
+	fprintf(stderr, "%s\nUsage:\t%s [options] \nOptions:\n\t-lmots\t\tRUN LMOTS TEST CASE\n\t-lms\t\tGenerate LMS Testcase\n\t-hlms\t\tGenerate HLMS Testcase\n\t-numsig \t-numsig NUM\tTo specify number of the signatures\n\t-sha256\t\tUSE SHA 256\n\t-blake2b\tUse BLAKE2B\n\t-blake2s\tUse Blake2S\n", msg, prog);
 	exit(-1);
 }
 
@@ -229,6 +231,8 @@ int main(int argc, char ** argv)
     char *sec_av;
     char* ptr;
     unsigned int algo = 0;
+    unsigned int hash_algo = SHA_256;
+    unsigned int hash_algo_found = 0;
     /*Atleast geneate one signature*/
     unsigned int numsig = 1;
     ac = 1;
@@ -244,6 +248,29 @@ int main(int argc, char ** argv)
             } else if (!strcmp(av, "hlms")) {
 				algo |= 4;
 			}
+			else if (!strcmp(av, "sha256")) {
+				hash_algo = SHA_256;
+                if(hash_algo_found == 1)
+                {
+                    usage(argv[0], "Invalid option.");
+                }
+                hash_algo_found = 1;
+
+			} else if (!strcmp(av, "blake2b")) {
+				hash_algo = BLAKE_2B;
+                if(hash_algo_found == 1)
+                {
+                    usage(argv[0], "Invalid option.");
+                }
+                hash_algo_found = 1;
+            } else if (!strcmp(av, "blake2s")) {
+				hash_algo = BLAKE_2S;
+                if(hash_algo_found == 1)
+                {
+                    usage(argv[0], "Invalid option.");
+                }
+                hash_algo_found = 1;                
+			}            
             else if (!strcmp(av, "numsig")) {
                 sec_av = argv[ac + 1];
 				numsig =(unsigned int )strtol(sec_av,&ptr,10);
@@ -259,6 +286,10 @@ int main(int argc, char ** argv)
 			}
 		}
 	}
+    
+    /*Choosing Hashing algo*/
+    chosen_has_algo = hash_algo;
+
     if (algo & 1)
     {
         lm_ots_test_case(numsig);
