@@ -127,13 +127,13 @@ unsigned int hlms_verify_signature(char* sig, char* public_key, char* message, u
         }
         else
         {
-            printf("pub2 verification of lms_sig did not pass\n");
+            D(printf("pub2 verification of lms_sig did not pass\n");)
             result = 0;
         }
     }
     else
     {
-        printf("pub1 verification of sig1 did not pass\n");
+        D(printf("pub1 verification of sig1 did not pass\n");)
         result = 0;    
     }
     free(decoded_hlms_signature.pub2);

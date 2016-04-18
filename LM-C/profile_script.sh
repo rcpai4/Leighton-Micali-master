@@ -1,7 +1,4 @@
-#!/bin/sh
-
-echo "PERF STATS" > perf_stats.txt
-echo "" >> perf_stats.txt
+#!/bin/bash
 
 PERF_CMD="perf"
 
@@ -10,13 +7,26 @@ PERL_ARGS="stat -e cpu-cycles -e instructions -e cache-references
 context-switches -e cpu-migrations -e minor-faults -e major-faults -e
 emulation-faults -e L1-dcache-loads -e L1-dcache-load-misses -e
 L1-dcache-stores -e L1-dcache-store-misses -e branch-loads -e
-branch-load-misses -B --append -o perf_stats.txt"
+branch-load-misses -B --append -o"
 
-PROG="./main_lm -lmots"
+iteration=50
 
-for i in `seq 1 10`;
+numsig=2096
+
+declare -a ALGOS=("-lmots" "-lms" "-hlms")
+
+for ALGO in "${ALGOS[@]}";  
 do
-    echo "" >> perf_stats.txt
-    $PERF_CMD $PERL_ARGS $PROG
-done   
+    PERF_FILE="perf_stat$ALGO.txt"
+    PROG="./main_lm -sha256 $ALGO -numsig"
+    echo "PERF STATS SHA-256" > $PERF_FILE
+    
+    for j in `seq 1 $iteration`;
+    do
+        echo "" >> $PERF_FILE
+        echo "$PERF_CMD $PERL_ARGS $PERF_FILE $PROG $numsig"
+        $PERF_CMD $PERL_ARGS $PERF_FILE $PROG $numsig
+    done
+done
+
 

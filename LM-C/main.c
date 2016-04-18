@@ -50,7 +50,7 @@ int lm_ots_test_case(unsigned int numsig)
     
         /* Generate Signature  */
         lm_ots_signature = lmots_generate_signature(lm_ots_private_key, I, q, message,(unsigned int)strlen(message));
-        print_lmots_signature(lm_ots_signature);
+        //print_lmots_signature(lm_ots_signature);
         D(printf("Verification: \n");)
         D(printf( "True positive test: \n");)
         if(lmots_verify_signature(lm_ots_public_key,lm_ots_signature,message,strlen(message)))
