@@ -193,7 +193,7 @@ int hlms_test_case(void)
 }
 void usage(char *prog, char *msg) {
 	fprintf(stderr, "%s\nUsage:\t%s [options] \nOptions:\n\t-lmots\tRUN LMOTS TEST CASE\n\t-LMS\tGenerate LMS Testcase\n", msg, prog);
-	exit(-1);
+	exit(1);
 }
 
 int main(int argc, char ** argv)
@@ -238,6 +238,7 @@ int main(int argc, char ** argv)
     {
         hlms_test_case();
     }
+    
     return 0;
 }
 
