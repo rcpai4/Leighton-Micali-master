@@ -102,7 +102,7 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
     hash_update(hash_handle,q, 4);
     hash_update(hash_handle,uint8ToString(D_MESG,temp_string), 1);
     get_hash(hash_handle,temp_hash_output);
-    memcpy(temp_hash_output + N,checksum((unsigned char*)temp_hash_output,32),2 *sizeof(char));
+    memcpy(temp_hash_output + N,checksum((unsigned char*)temp_hash_output,N),2 *sizeof(char));
     //printf("HashQ: %s\n ",stringToHex(temp_hash_output,N + 2));
     while(curr_priv_key_node != NULL)
     {
@@ -204,7 +204,7 @@ void print_lmots_signature(char* lmots_signature)
     unsigned int  i = 0;         
     decode_lmots_sig(lmots_signature,&decoded_sig);
     printf("C:\t %s\n",stringToHex(decoded_sig.C,N));
-    printf("I:\t %s\n",stringToHex(decoded_sig.I,31));
+    printf("I:\t %s\n",stringToHex(decoded_sig.I,ENTROPY_SIZE));
     printf("q:\t %s\n",stringToHex(decoded_sig.q,4));
     temp_node = decoded_sig.y;
     while(temp_node != NULL)
@@ -227,7 +227,7 @@ void decode_lmots_sig(char *sig, lm_ots_sig_t* decoded_sig)
     unsigned int i = 0; 
     memcpy(typecode,sig,4*sizeof(char));
     memcpy(decoded_sig->C,sig + 4*sizeof(char),N);
-    memcpy(decoded_sig->I,sig + (N + 4)*sizeof(char),31);
+    memcpy(decoded_sig->I,sig + (N + 4)*sizeof(char),ENTROPY_SIZE);
     memcpy(decoded_sig->q,sig + (N + 36)*sizeof(char),4);
     unsigned int pos = N+40;
     
@@ -250,7 +250,7 @@ void decode_lmots_sig(char *sig, lm_ots_sig_t* decoded_sig)
 }
 unsigned int bytes_in_lmots_sig(void)
 {
-    return (N*(P+1)+40);// # 4 + n + 31 + 1 + 4 + n*p
+    return (N*(P+1)+ ENTROPY_SIZE + 9);// # 4 + n + ENTROPY_SIZE + 1 + 4 + n*p
 }
 
 unsigned int  lmots_verify_signature(char* public_key,char * sig, char* message,unsigned int mes_len)
@@ -293,7 +293,7 @@ char* lmots_sig_to_public_key(char *sig, char* message,unsigned int mes_len)
     memcpy(hashQ + N, checksum((unsigned char *)hashQ,N), 2*sizeof(char));
     //printf( "V: %s \n",stringToHex(temp_hashQ,34));
     
-    hash_update(hash_handle,decoded_sig.I,31);
+    hash_update(hash_handle,decoded_sig.I,ENTROPY_SIZE);
     hash_update(hash_handle,decoded_sig.q,4);
     
     temp_node = decoded_sig.y;

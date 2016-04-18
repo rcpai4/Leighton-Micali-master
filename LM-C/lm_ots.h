@@ -15,7 +15,7 @@
 typedef struct lm_ots_sig
 {
     char C[N];
-    char I[31];
+    char I[ENTROPY_SIZE];
     char q[4];
     list_node_t* y;    
 } lm_ots_sig_t;

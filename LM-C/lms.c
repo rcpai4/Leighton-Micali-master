@@ -14,8 +14,8 @@ lms_priv_key_t* create_lms_priv_key(void)
     lms_priv_key_t* lms_private_key = (lms_priv_key_t*) malloc(sizeof(lms_priv_key_t));    
     unsigned  int q = 0;
     char      temp_string[5] = {0};
-    entropy_read(lms_private_key->I,31);
-    //printf("I: %s\n",stringToHex(lms_private_key->I,31));
+    entropy_read(lms_private_key->I,ENTROPY_SIZE);
+    //printf("I: %s\n",stringToHex(lms_private_key->I,ENTROPY_SIZE));
     lms_private_key->priv  = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
     lms_private_key->pub   = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
     for(q = 0; q < NUM_LEAF_NODES; q++)
@@ -34,7 +34,7 @@ lms_priv_key_t* create_lms_priv_key(void)
     lms_private_key->nodes  = (list_node_t *) malloc( 2* NUM_LEAF_NODES *sizeof(list_node_t));
     for(q = 0; q < 2* NUM_LEAF_NODES; q++)
     {
-        lms_private_key->nodes[(unsigned int)q].data = (char *)malloc(32 * sizeof(char));
+        lms_private_key->nodes[(unsigned int)q].data = (char *)malloc(N * sizeof(char));
         lms_private_key->nodes[(unsigned int)q].next = NULL;
     }
     lms_private_key->leaf_num       = 0;
@@ -58,7 +58,7 @@ char* T(lms_priv_key_t* private_key, unsigned int j)
             memcpy(temp_input + N + ENTROPY_SIZE + 4,uint8ToString(D_LEAF,temp_string),1);
             H(temp_input,private_key->nodes[j].data,N + ENTROPY_SIZE + 4 + 1);
             //printf("INPUT PUB: %s \n",stringToHex(lm_ots_pub_key->data,N));
-            //printf("INPUT I: %s \n",stringToHex(private_key->I,31));
+            //printf("INPUT I: %s \n",stringToHex(private_key->I,ENTROPY_SIZE));
             //printf("INPUT j: %s \n",stringToHex(uint32ToString(j),4));
             //printf("INPUT D_LEAF: %s \n",stringToHex(uint8ToString(D_LEAF),1));
             //printf("INPUT %s \n",stringToHex(temp_input,N +36));
@@ -68,13 +68,13 @@ char* T(lms_priv_key_t* private_key, unsigned int j)
         {
             memcpy(temp_input, T(private_key,2*j),N*sizeof(char));
             memcpy(temp_input + N, T(private_key,2*j + 1),N*sizeof(char));
-            memcpy(temp_input + N + N , private_key->I ,31*sizeof(char));
+            memcpy(temp_input + N + N , private_key->I ,ENTROPY_SIZE*sizeof(char));
             memcpy(temp_input + N + N + ENTROPY_SIZE, uint32ToString(j,temp_string),4*sizeof(char));
             memcpy(temp_input + N + N + ENTROPY_SIZE + 4, uint8ToString(D_INTR,temp_string),sizeof(char));
             H(temp_input,private_key->nodes[j].data,N + N + ENTROPY_SIZE + 4 + 1);
             //printf("INPUT T(%d): %s \n",2*j,stringToHex(temp_input,N));
             //printf("INPUT T(%d): %s \n",2*j + 1,stringToHex(temp_input +N,N));
-            //printf("INPUT I: %s \n",stringToHex(private_key->I,31));
+            //printf("INPUT I: %s \n",stringToHex(private_key->I,ENTROPY_SIZE));
             //printf("INPUT j: %s \n",stringToHex(uint32ToString(j),4));
             //printf("INPUT D_LEAF: %s \n",stringToHex(uint8ToString(D_INTR),1));
             //printf("INPUT %s \n",stringToHex(temp_input,2*N +36));
@@ -103,7 +103,7 @@ char* lms_generate_signature(lms_priv_key_t* lms_private_key,char* message,unsig
     //printf("LMOTS SIG INP \n ");
     //printf("LMOTS PRIV KEY \n ");
     //print_link_list((list_node_t* )lms_private_key->priv[lms_private_key->leaf_num].data,N);
-    //printf(" I: %s  \n ",stringToHex(lms_private_key->I,31));
+    //printf(" I: %s  \n ",stringToHex(lms_private_key->I,ENTROPY_SIZE));
     //printf("LEAF %d \n ",lms_private_key->leaf_num);
     sig = lmots_generate_signature((list_node_t* )lms_private_key->priv[lms_private_key->leaf_num].data, 
                                     lms_private_key->I,
@@ -130,7 +130,7 @@ list_node_t* get_path(lms_priv_key_t* lms_private_key, unsigned int leaf_num)
     while(node_num > 1)
     {
         temp_node = (list_node_t*)malloc(sizeof(list_node_t));
-        temp_node->data = (char*) malloc(32*sizeof(char));
+        temp_node->data = (char*) malloc(N*sizeof(char));
         temp_node->next = NULL;
         if (node_num % 2)
         {

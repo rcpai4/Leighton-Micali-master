@@ -6,7 +6,7 @@ unsigned int NUM_LEAF_NODES;
 
 typedef struct lms_priv_key
 {
-    char I[31];
+    char I[ENTROPY_SIZE];
     list_node_t* priv;
     list_node_t* pub;
     unsigned int leaf_num;

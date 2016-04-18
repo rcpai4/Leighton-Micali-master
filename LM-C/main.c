@@ -99,7 +99,7 @@ int lms_test_case(unsigned int numsig)
     
     /* Generate Public Key */
     lms_public_key = get_public_key(lms_private_key);
-    printf(" LMS PUBLIC KEY: %s \n",stringToHex(lms_public_key,32));
+    printf(" LMS PUBLIC KEY: %s \n",stringToHex(lms_public_key,N));
     message_len = (unsigned int)strlen(message);
     
     /* Generate Signature */    

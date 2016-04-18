@@ -54,8 +54,6 @@ char* entropy_read(char* buffer, unsigned int n)
 
 char* uint32ToString(unsigned int x,char* data)
 {
-    //char* data = (char* )malloc(32 * sizeof(char));
-    //memset(data,0,4 * sizeof(char));
     char c1 = 0,c2 = 0,c3 = 0,c4 =0;
     c4 = (char)(x & 0xff);
     x = x >> 8;
