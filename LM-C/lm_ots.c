@@ -179,18 +179,6 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y)
         temp_node  = temp_node->next;
         i++;
     }
-    //temp_node = y; 
-    
-    //while(temp_node != NULL)
-    //{
-        //printf("DATA: %p \n ",temp_node->data);
-        //printf("NODE: %p \n ",temp_node);
-    //    list_node_t*  prev_node = temp_node->next;
-   //     free(temp_node->data);
-    //    free(temp_node);
-    //    temp_node = prev_node;
-    //}
-    //
     lm_ots_cleanup_keys(y,NULL);
 
     //printf("signture: %s \n ", stringToHex(result,len));

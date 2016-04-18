@@ -29,7 +29,6 @@ char file_buff[1024];
 unsigned int chosen_has_algo        = SHA_256;
 void entropy_create(void)
 {
-    DEBUG_PRINT;
     srand(time(0));
 #if FILE_READ
     fp_file = fopen("inputfile_hlms","r");

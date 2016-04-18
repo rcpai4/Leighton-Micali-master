@@ -1,11 +1,19 @@
 /* Common Headers */
 
 #define     RDM_DATA_SIZE   1024
-#define     DEBUG_PRINT     printf(" %s %d \n ",__FUNCTION__,__LINE__)
+
 #define     FILE_READ       0
 #define     ENTROPY_SIZE    31
 #define     MSG_SIZE        1024
 #define     N               32
+
+#ifdef DEBUG
+#  define D(x) x
+#else
+#  define D(x) 
+#endif
+
+#define     DEBUG_PRINT     printf(" %s %d \n ",__FUNCTION__,__LINE__)
 
 #define LMS_SHA256_N32_H10 0x02000002
 #define HLMS_SHA256_N32_L2 0x01000001 
