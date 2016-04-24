@@ -19,7 +19,6 @@ int lm_ots_test_case(unsigned int numsig)
     list_node_t*    lm_ots_private_key  = NULL;
     char*           lm_ots_public_key   = NULL;
     char*           lm_ots_signature    = NULL;
-    list_node_t*    temp_node           = NULL;
     char            I[ENTROPY_SIZE]     = {0};
     char            q[5]                = {0};
     char*           message             = (char* )malloc(MSG_SIZE * sizeof(char));
@@ -34,12 +33,9 @@ int lm_ots_test_case(unsigned int numsig)
         
         /* Generate Private Key */
         lm_ots_private_key  = generate_private_key();
-        temp_node           = lm_ots_private_key; 
-        while(temp_node != NULL)
+        for( i = 0; i < P; i++)
         {
-            D(printf("PRIV KEY[%d]: %s \n",i,stringToHex(temp_node->data,N));)
-            temp_node = temp_node->next;
-            i++;
+            D(printf("PRIV KEY[%d]: %s \n",i,stringToHex(lm_ots_private_key[i].data,N));)
         }
     
         /* Generate Public Key */

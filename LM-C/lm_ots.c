@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-
+#include <omp.h>
 //User defined headers
 #include "commons.h"
 #include "lm_ots.h"
@@ -10,25 +10,14 @@
 list_node_t* generate_private_key(void)
 {
     int i = 0;
-    list_node_t* root     =  NULL;
-    list_node_t* temp_node = NULL;
-    list_node_t* curr_node = root;
-    
+    list_node_t* root = (list_node_t*) malloc(P * sizeof(list_node_t));
+    char*        data = (char*) malloc(N*P*sizeof(char));
+#pragma omp parallel for private(i)
     for(i = 0; i < P; i++)
     {
-        temp_node = (list_node_t*)malloc(sizeof(list_node_t));
-        temp_node->next = NULL;
-        temp_node->data = malloc(N * sizeof(char));
-        entropy_read(temp_node->data,N);
+        root[i].data = data  + i*N;
+        entropy_read(root[i].data,N);
         //printf("i: %s \n",stringToHex(temp_node->data,N));
-        if(curr_node == NULL)
-        {
-            curr_node   = temp_node;
-            root        = temp_node;
-            continue;
-        }
-        curr_node->next = temp_node;
-        curr_node = temp_node;
     }
     return root;
 }
@@ -48,32 +37,36 @@ void print_link_list(list_node_t* root,unsigned  int len)
 char* generate_public_key(list_node_t* private_key, char* I, char* q)
 {    
     void* hash_handle = hash_create();
-    unsigned int i = 0, j = 0;
+    unsigned int i = 0;
     char* public_key = (char* )malloc(N * sizeof(char));
+    char* temp_text = (char *)malloc(N*P);
     char temp_string[5] = {0};
-    list_node_t* temp_node =  private_key;    
-    char* temp_text = (char *)malloc(MSG_SIZE* sizeof(char));
-    
     hash_update(hash_handle,I,ENTROPY_SIZE);
     hash_update(hash_handle,q,4);
-
-    while(temp_node != NULL)
+#pragma omp parallel for private(i) shared(private_key,temp_text,I,q)
+    for(i = 0; i < P; i++)
     {
-        memcpy(temp_text,temp_node->data,N * sizeof(char));
+        unsigned int j = 0;
+        char temp_string_1[5] = {0};
+        memcpy(temp_text + (i * N),private_key[i].data,N * sizeof(char));
         for(j = 0; j < 256;j++)
         {
-            memcpy(temp_text + (N),I,ENTROPY_SIZE * sizeof(char));
-            memcpy(temp_text + ( N + ENTROPY_SIZE ), q,4*sizeof(char));
-            memcpy(temp_text + ( N + ENTROPY_SIZE + 4), uint16ToString(i,temp_string),2);
-            memcpy(temp_text + ( N + ENTROPY_SIZE + 4 + 2), uint8ToString(j,temp_string),1);
-            memcpy(temp_text + ( N + ENTROPY_SIZE + 4 + 2 + 1), uint8ToString(0,temp_string),1);
-            H(temp_text,temp_text,N + ENTROPY_SIZE + 4 + 2 + 1 + 1);
+            void* inter_hash_handle = hash_create();
+            hash_update(inter_hash_handle,temp_text + (i*N),N);
+            hash_update(inter_hash_handle,I,ENTROPY_SIZE * sizeof(char));
+            hash_update(inter_hash_handle,q,4*sizeof(char));
+            hash_update(inter_hash_handle,uint16ToString(i,temp_string_1),2);
+            hash_update(inter_hash_handle,uint8ToString(j,temp_string_1),1);
+            hash_update(inter_hash_handle,uint8ToString(0,temp_string_1),1);
+            get_hash(inter_hash_handle,temp_text + i*N);
+                //H(temp_text,temp_text,N + ENTROPY_SIZE + 4 + 2 + 1 + 1);
         }
-
         //printf("[%d]: %s \n ",i,stringToHex(temp_text,32));
-        hash_update(hash_handle,temp_text, N);
-        temp_node = temp_node->next;
-        i++;
+    }
+
+    for(i = 0; i < P; i++)
+    {
+        hash_update(hash_handle,temp_text + (i * N), N);
     }
     hash_update(hash_handle,uint8ToString(D_PBLC,temp_string),1);
     get_hash(hash_handle,public_key);
@@ -90,11 +83,8 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
     void*           hash_handle                 = hash_create();
     int             i = 0, j = 0;
     char            temp_string[5]              = {0};
-    list_node_t*    root                        = NULL;
-    list_node_t*    temp_node                   = NULL;
-    list_node_t*    curr_node                   = NULL;
-    list_node_t*    curr_priv_key_node          = lm_ots_private_key;
-    char            temp_input[N + ENTROPY_SIZE + 4 + 2 + 1 + 1] = {0};
+    list_node_t*    root                        = (list_node_t*) malloc(P*sizeof(list_node_t));
+    //char            temp_input[N + ENTROPY_SIZE + 4 + 2 + 1 + 1] = {0};
     entropy_read(C,N);
     hash_update(hash_handle,message, mes_len);
     hash_update(hash_handle,C, N);
@@ -104,34 +94,24 @@ char* lmots_generate_signature(list_node_t* lm_ots_private_key, char* I,char* q,
     get_hash(hash_handle,temp_hash_output);
     memcpy(temp_hash_output + N,checksum((unsigned char*)temp_hash_output,N),2 *sizeof(char));
     //printf("HashQ: %s\n ",stringToHex(temp_hash_output,N + 2));
-    while(curr_priv_key_node != NULL)
+#pragma omp parallel for private(temp_string,j)
+    for( i = 0; i < P ; i++)
     {
-        temp_node = (list_node_t*)malloc(sizeof(list_node_t));
-        temp_node->next = NULL;
-        temp_node->data = (char *)malloc(N * sizeof(char));
-        memcpy(temp_input,curr_priv_key_node->data, N);
+        root[i].data = (char *)malloc(N * sizeof(char));
+        memcpy(root[i].data,lm_ots_private_key[i].data, N);
         for (j = 0; j <  (unsigned char)(temp_hash_output[i]); j++)
         {
-            memcpy(temp_input + N,I, ENTROPY_SIZE);
-            memcpy(temp_input + N + ENTROPY_SIZE,q, 4);
-            memcpy(temp_input + N + ENTROPY_SIZE + 4,uint16ToString(i,temp_string), 2);
-            memcpy(temp_input + N + ENTROPY_SIZE + 4 + 2,uint8ToString(j,temp_string), 1);
-            memcpy(temp_input + N + ENTROPY_SIZE + 4 + 2 + 1,uint8ToString(D_ITER,temp_string), 1);
-            H(temp_input,temp_input, N + ENTROPY_SIZE + 4 + 2 + 1 + 1);
-            //printf(" OUTPUT : %s \n ",stringToHex(temp_node->data ,N));
+            void*   inter_hash_handle   = hash_create();
+            hash_update(inter_hash_handle,root[i].data, N);
+            hash_update(inter_hash_handle,I, ENTROPY_SIZE);
+            hash_update(inter_hash_handle,q, 4);
+            hash_update(inter_hash_handle,uint16ToString(i,temp_string), 2);
+            hash_update(inter_hash_handle,uint8ToString(j,temp_string), 1);
+            hash_update(inter_hash_handle,uint8ToString(D_ITER,temp_string), 1);
+            get_hash(inter_hash_handle,root[i].data);
         }
-        memcpy(temp_node->data,temp_input,N);
+        //memcpy(root[i].data,temp_input,N);
         //printf("%d [%s] \n ",i,stringToHex(temp_node->data,32));
-        i++;
-        curr_priv_key_node = curr_priv_key_node->next;
-        if(curr_node == NULL)
-        {
-            curr_node   = temp_node;
-            root        = temp_node;
-            continue;
-        }
-        curr_node->next = temp_node;
-        curr_node = temp_node;
     }
 
     return encode_lmots_signature(C, I, q, root);
@@ -162,7 +142,6 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y)
 {
     char* result = (char*)malloc(bytes_in_lmots_sig());
     unsigned int len = 0;
-    list_node_t*  temp_node = NULL;
     char temp_string[5] = {0};
     unsigned int i = 0;
     memcpy(result,uint32ToString(LMOTS_SHA256_N32_W8,temp_string),4*sizeof(char));
@@ -171,28 +150,14 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y)
     memcpy(result + ((4 + ENTROPY_SIZE + N) * sizeof(char)),uint8ToString(0,temp_string), 1*sizeof(char));    
     memcpy(result + ((1 + 4 + ENTROPY_SIZE + N) * sizeof(char)),q, 4*sizeof(char));    
     len =  4 + 1 + 4 + ENTROPY_SIZE + N;
-    temp_node = y; 
-    while(temp_node != NULL)
-    {
-        memcpy(result + len,temp_node->data, N*sizeof(char));
-        len = len + (N*sizeof(char));
-        temp_node  = temp_node->next;
-        i++;
-    }
-    //temp_node = y; 
     
-    //while(temp_node != NULL)
-    //{
-        //printf("DATA: %p \n ",temp_node->data);
-        //printf("NODE: %p \n ",temp_node);
-    //    list_node_t*  prev_node = temp_node->next;
-   //     free(temp_node->data);
-    //    free(temp_node);
-    //    temp_node = prev_node;
-    //}
-    //
+    for(i = 0; i < P; i++)
+    {
+        memcpy(result + len,y[i].data, N*sizeof(char));
+        len = len + (N*sizeof(char));
+    }
+    
     lm_ots_cleanup_keys(y,NULL);
-
     //printf("signture: %s \n ", stringToHex(result,len));
     return result;
 }
@@ -200,18 +165,15 @@ char* encode_lmots_signature(char* C, char* I, char* q,list_node_t*  y)
 void print_lmots_signature(char* lmots_signature)
 {
     lm_ots_sig_t decoded_sig;
-    list_node_t*  temp_node;
     unsigned int  i = 0;         
     decode_lmots_sig(lmots_signature,&decoded_sig);
     printf("C:\t %s\n",stringToHex(decoded_sig.C,N));
     printf("I:\t %s\n",stringToHex(decoded_sig.I,ENTROPY_SIZE));
     printf("q:\t %s\n",stringToHex(decoded_sig.q,4));
-    temp_node = decoded_sig.y;
-    while(temp_node != NULL)
+    
+    for(i = 0; i < P;i++)    
     {
-        printf("[%d] %s \n",i,stringToHex(temp_node->data,N));
-        temp_node = temp_node->next;
-        i++;
+        printf("[%d] %s \n",i,stringToHex(decoded_sig.y[i].data,N));
     }
     
     /* Cleanup the keys we created */
@@ -222,30 +184,21 @@ void print_lmots_signature(char* lmots_signature)
 void decode_lmots_sig(char *sig, lm_ots_sig_t* decoded_sig)
 {
     char typecode[4] ={0};
-    list_node_t* temp_node = NULL;
-    list_node_t* curr_node = NULL;
     unsigned int i = 0; 
     memcpy(typecode,sig,4*sizeof(char));
     memcpy(decoded_sig->C,sig + 4*sizeof(char),N);
     memcpy(decoded_sig->I,sig + (N + 4)*sizeof(char),ENTROPY_SIZE);
     memcpy(decoded_sig->q,sig + (N + 36)*sizeof(char),4);
     unsigned int pos = N+40;
+
+    decoded_sig->y = (list_node_t*) malloc(P*sizeof(list_node_t));
     
     for(i = 0; i < P; i++)
     {
-        temp_node = (list_node_t*)malloc(sizeof(list_node_t));
-        temp_node->data = malloc(N * sizeof(char));
-        temp_node->next = NULL;
-        memcpy(temp_node->data,sig + pos,N);
+        decoded_sig->y[i].data = malloc(N * sizeof(char));
+        decoded_sig->y[i].next = NULL;
+        memcpy(decoded_sig->y[i].data,sig + pos,N);
         pos = pos + N;
-        if(curr_node == NULL)
-        {
-            curr_node   = temp_node;
-            decoded_sig->y = temp_node;
-            continue;
-        }
-        curr_node->next = temp_node;
-        curr_node = temp_node;
     }
 }
 unsigned int bytes_in_lmots_sig(void)
@@ -277,7 +230,6 @@ char* lmots_sig_to_public_key(char *sig, char* message,unsigned int mes_len)
     char* hashQ = (char *) malloc(mes_len + N + ENTROPY_SIZE + 4 + 1);
     char* public_key =(char*) malloc(N * sizeof(char));    
     void* hash_handle = hash_create();
-    list_node_t* temp_node = NULL;
     int i = 0;
     unsigned int j = 0; 
     char temp_string[5] ={0};
@@ -296,11 +248,10 @@ char* lmots_sig_to_public_key(char *sig, char* message,unsigned int mes_len)
     hash_update(hash_handle,decoded_sig.I,ENTROPY_SIZE);
     hash_update(hash_handle,decoded_sig.q,4);
     
-    temp_node = decoded_sig.y;
-    while(temp_node != NULL)
+    for(i = 0; i < P; i++)
     {
         //printf("[%d] %s \n\n ",i,stringToHex(temp_node->data,N));
-        memcpy(temp_input,temp_node->data,N);
+        memcpy(temp_input,decoded_sig.y[i].data,N);
         for (j = (unsigned char)(hashQ[i]); j < 256; j++)
         {
             memcpy(temp_input + N,decoded_sig.I, ENTROPY_SIZE);
@@ -313,8 +264,6 @@ char* lmots_sig_to_public_key(char *sig, char* message,unsigned int mes_len)
             //printf(" OUTPUT : %s \n ",stringToHex(temp_input,N));
         }
         hash_update(hash_handle,temp_input,N);
-        temp_node = temp_node->next;
-        i++;
     }
     hash_update(hash_handle,uint8ToString(D_PBLC,temp_string),1);
     
@@ -329,18 +278,19 @@ char* lmots_sig_to_public_key(char *sig, char* message,unsigned int mes_len)
 
 void lm_ots_cleanup_keys(list_node_t*  priv_key, char* pub_key)
 {
-    list_node_t*  curr_node = priv_key; 
-    list_node_t*  temp_node = priv_key; 
+    unsigned int i = 0; 
 
-    while(curr_node != NULL)
-    {
-        temp_node = curr_node->next;
-        if(curr_node->data != NULL)
-            free(curr_node->data);
-        if(curr_node != NULL)
-            free(curr_node);
-        curr_node = temp_node;
-    }
+//#pragma omp parallel for    
+//    for(i = 0; i < P; i++)
+//    {
+//        if(priv_key[i].data)
+//        {
+//            free(priv_key[i].data);
+//            priv_key[i].data = NULL;
+//        }
+//    }
+    free(priv_key[0].data);
+    free(priv_key);
     
     if(pub_key != NULL)
     {

@@ -3,11 +3,13 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 //User defined headers
 #include "commons.h"
 #include "lm_ots.h"
 #include "lms.h"
+
 
 lms_priv_key_t* create_lms_priv_key(void)
 {
@@ -18,6 +20,7 @@ lms_priv_key_t* create_lms_priv_key(void)
     //printf("I: %s\n",stringToHex(lms_private_key->I,ENTROPY_SIZE));
     lms_private_key->priv  = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
     lms_private_key->pub   = (list_node_t *) malloc(NUM_LEAF_NODES *sizeof(list_node_t));
+#pragma omp parallel for private(q,temp_string)
     for(q = 0; q < NUM_LEAF_NODES; q++)
     {
         //printf("I: %s q: %s \n ",lms_private_key->I,uint32ToString(q,temp_string));
@@ -32,6 +35,7 @@ lms_priv_key_t* create_lms_priv_key(void)
     }
     
     lms_private_key->nodes  = (list_node_t *) malloc( 2* NUM_LEAF_NODES *sizeof(list_node_t));
+#pragma omp parallel for
     for(q = 0; q < 2* NUM_LEAF_NODES; q++)
     {
         lms_private_key->nodes[(unsigned int)q].data = (char *)malloc(N * sizeof(char));
@@ -322,8 +326,9 @@ void cleanup_lms_key(lms_priv_key_t* lms_private_key,char* lms_public_key)
     unsigned int q = 0;
     for(q = 0; q < NUM_LEAF_NODES; q++)
     {
-        cleanup_link_list((list_node_t *)lms_private_key->priv[(unsigned int)q].data);
-        free(lms_private_key->pub[(unsigned int)q].data);
+        lm_ots_cleanup_keys((list_node_t *)lms_private_key->priv[(unsigned int)q].data,
+                            lms_private_key->pub[(unsigned int)q].data);
+        //free(lms_private_key->pub[(unsigned int)q].data);
     }
     for(q = 0; q < 2* NUM_LEAF_NODES; q++)
     {
