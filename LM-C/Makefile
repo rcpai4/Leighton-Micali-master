@@ -9,7 +9,7 @@
 #CC = /media/dvolume/MEng-Spring2016/workspace/gcc-linaro-4.9-2014.11-x86_64_aarh64-linux-gnu/bin/aarch64-linux-gnu-gcc
 CC = gcc
 # define any compile-time flags
-CFLAGS = -Wall -g -fopenmp -DDEBUG
+CFLAGS = -Wall -g -O3 -fopenmp
 
 # define any directories containing header files other than /usr/include
 #

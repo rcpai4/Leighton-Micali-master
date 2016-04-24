@@ -31,7 +31,7 @@ void entropy_create(void)
 {
     srand(time(0));
 #if FILE_READ
-    fp_file = fopen("inputfile_hlms","r");
+    fp_file = fopen("inputfile_lms","r");
 #else
     fp_file = fopen("/dev/urandom", "r");
 #endif
@@ -44,7 +44,8 @@ char* entropy_read(char* buffer, unsigned int n)
     strip(file_buff);
     to_ascii(buffer,file_buff);
 #else
-    fread(buffer, 1, n, fp_file);
+    if(n == fread(buffer, 1, n, fp_file))
+        return buffer;
     //fclose(fp);
 #endif
     return buffer;
