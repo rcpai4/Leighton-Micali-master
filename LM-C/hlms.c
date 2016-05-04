@@ -16,11 +16,11 @@ hlms_priv_key_t* create_hlms_priv_key(void)
     hlms_priv_key_t* hlms_priv  = (hlms_priv_key_t*) malloc(sizeof(hlms_priv_key_t));
     /* Init Level 1*/
     hlms_priv->lms_priv_key_1   = create_lms_priv_key();
-    
+
     /* Init Level 2 */
     hlms_priv->lms_priv_key_2   = create_lms_priv_key();
     hlms_priv->lms_sig_1        = lms_generate_signature(hlms_priv->lms_priv_key_1,get_public_key(hlms_priv->lms_priv_key_2),N);
-   
+
     return hlms_priv;
 }
 
@@ -35,13 +35,13 @@ char* hlms_generate_signature(hlms_priv_key_t* hlms_private_key,char *message,un
     char* lms_sig  = NULL;
     char* hlms_sig = NULL;
     lms_sig  = lms_generate_signature(hlms_private_key->lms_priv_key_2,message,mes_len);
-    
+
     if (lms_sig == NULL)
     {
-        printf("Refreshing level 2 public/private key pair");
+        printf("Refreshing level 2 public/private key pair \n");
         hlms_init_level_2(hlms_private_key);
         lms_sig  = lms_generate_signature(hlms_private_key->lms_priv_key_2,message,mes_len);
-        
+
     }
     hlms_sig = encode_hlms_sig(get_public_key(hlms_private_key->lms_priv_key_2), hlms_private_key->lms_sig_1, lms_sig);
     free(lms_sig);
@@ -54,7 +54,7 @@ void hlms_init_level_2(hlms_priv_key_t *hlms_private_key)
     free(hlms_private_key->lms_sig_1);
     cleanup_lms_key(hlms_private_key->lms_priv_key_2,NULL);
 
-    /* Allocating the new key */    
+    /* Allocating the new key */
     hlms_private_key->lms_priv_key_2 = create_lms_priv_key();
     //self.sig1 = self.prv1.sign(self.prv2.get_public_key())
     hlms_private_key->lms_sig_1      = lms_generate_signature(hlms_private_key->lms_priv_key_1,
@@ -134,7 +134,7 @@ unsigned int hlms_verify_signature(char* sig, char* public_key, char* message, u
     else
     {
         D(printf("pub1 verification of sig1 did not pass\n");)
-        result = 0;    
+        result = 0;
     }
     free(decoded_hlms_signature.pub2);
     free(decoded_hlms_signature.sig1);
@@ -148,5 +148,5 @@ void cleanup_hlms_keys(hlms_priv_key_t* hlms_private_key)
     cleanup_lms_key(hlms_private_key->lms_priv_key_2,NULL);
     cleanup_lms_key(hlms_private_key->lms_priv_key_1,NULL);
 }
-        
+
 
